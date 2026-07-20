@@ -614,19 +614,17 @@
        using real getBoundingClientRect() values from the zoomed page, so the overlay
        needs the reciprocal zoom to actually render 1:1 with those coordinates. */
     #tipsOverlay{ zoom:calc(1 / var(--mobile-zoom)); }
-    .header-icons{ flex-direction:column-reverse; gap:4px; }
+    .header-icons{ gap:4px; }
     .bpm-field{ flex:0 0 122px; padding:0 4px 0 10px; }
     .bpm-field input{ font-size:19px; }
     .tap-btn{ flex:1; padding:0 8px; font-size:11px; }
     .scratch-row{ flex-direction:column; }
-    .field-grid{ gap: 4px; }
+    .field-grid{ grid-template-columns:1fr 1fr; gap: 4px; }
     .division-grid{ grid-template-columns:repeat(8,1fr); }
-    .readout input{ font-size:16px; }
-	.readout.is-sr .sr-select-inline {
-    font-size: 8px;       /* Shrinks the 48k/96k select text */
-    padding: 1px 1px;      /* Compacts the dropdown */
-	
-  }
+    .readout input{ font-size:19px; }
+	.brand{ text-align:left; }
+	.div-btn .n{ font-size: 8px; }
+	.mod-btn{ width:46px; height:28px; }
   }
 </style>
 </head>
@@ -671,14 +669,14 @@
   <header>
     <div class="header-icons">
       <button class="icon-btn" id="tipsBtn" aria-label="Show field tips" title="Show field tips">
-        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 16 16" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="8" cy="8" r="6.2"/>
           <line x1="8" y1="7.2" x2="8" y2="11.3"/>
           <circle cx="8" cy="4.9" r="0.15" fill="currentColor" stroke-width="1.9"/>
         </svg>
       </button>
       <button class="icon-btn reset-btn" id="resetBtn" aria-label="Reset to defaults" title="Reset to defaults">
-        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 16 16" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
           <path d="M13.5 8A5.5 5.5 0 1 1 11.8 4"/>
           <path d="M13.5 2.3v3.7h-3.7"/>
         </svg>
