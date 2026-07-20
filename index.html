@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tempo/Pitch Hub</title>
+<title>Wavelength Musical Calculator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -56,21 +56,25 @@
     border-bottom:1px solid var(--border-lo);
   }
   .brand{ text-align:center; }
-  .brand .eyebrow{
-    display:block;
-    margin-top:4px;
-    font-family:'IBM Plex Mono', monospace;
-    font-size:10.5px;
-    letter-spacing:0.15em;
-    color:var(--text-faint);
-    text-transform:uppercase;
-  }
   .brand h1{
     margin:0;
     font-size:19px;
     font-weight:600;
     letter-spacing:0.01em;
+    color:var(--text);
+  }
+  .site-wordmark{
+    display:block;
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:34px;
+    font-weight:700;
+    letter-spacing:0.14em;
     color:var(--sr);
+    text-transform:uppercase;
+    margin:0 0 18px;
+    width:100%;
+    max-width:680px;
   }
   .header-icons{
     position:absolute;
@@ -602,6 +606,11 @@
   .notes-field:focus{ outline:1px solid var(--text-muted); outline-offset:1px; color:var(--text); }
 
   @media (max-width:560px){
+    body{ zoom:0.9; }
+    .header-icons{ flex-direction:column-reverse; gap:4px; }
+    .bpm-field{ flex:0 0 122px; padding:0 4px 0 10px; }
+    .bpm-field input{ font-size:19px; }
+    .tap-btn{ flex:1; padding:0 8px; font-size:11px; }
     .scratch-row{ flex-direction:column; }
     .field-grid{ grid-template-columns:1fr 1fr; }
     .division-grid{ grid-template-columns:repeat(4,1fr); }
@@ -610,6 +619,8 @@
 </style>
 </head>
 <body>
+
+<span class="site-wordmark">Wavelength</span>
 
 <div class="unit">
   <header>
@@ -630,7 +641,6 @@
     </div>
     <div class="brand">
       <h1>Musical Calculator</h1>
-      <span class="eyebrow">BPM · MS · HZ · NOTES · SAMPLES</span>
     </div>
   </header>
 
@@ -1315,13 +1325,13 @@
       text:'Type a BPM, tap it in, or lock it. Locked keeps BPM fixed and solves ms. Unlocked, a division solves BPM instead.' },
     { targets:['#divisionGrid', '#modifierRow'],
       title:'Pick a note division',
-      text:'Choose a note length, then straight, dotted, or triplet. It turns amber on an exact match at this tempo.' },
+      text:'Choose a note length and an optional modifier.' },
     { targets:['.field-grid'],
-      title:'Read the conversion',
+      title:'Conversion',
       text:'ms, Hz, Note, and Samples all stay in sync. Edit any one and the rest follow.' },
     { targets:['.scratch-row'],
       title:'Notes & calculator',
-      text:'Two collapsible panels for scratch space. Every field above does quick math too, like typing 120/2 into BPM and hitting Enter.' },
+      text:'Notes and Calculator. For some quick math: Every field on the site accepts basic math operations (eg. typing 120/2 into BPM and hitting Enter to get 60).' },
   ];
   let tourStep = 0;
 
@@ -1356,10 +1366,41 @@
       maxX = Math.max(maxX, r.right);
       maxY = Math.max(maxY, r.bottom);
     });
-    if(!isFinite(minX)) return;
+    if(!isFinite(minX)) return null;
     const hx = minX-pad, hy = minY-pad, hw = (maxX-minX)+pad*2, hh = (maxY-minY)+pad*2;
     tipsMaskHoles.appendChild(svgEl('rect', { x:hx, y:hy, width:hw, height:hh, rx:8, fill:'black' }));
     tipsOutlines.appendChild(svgEl('rect', { x:hx, y:hy, width:hw, height:hh, rx:8, class:'tips-outline' }));
+    return { hx, hy, hw, hh };
+  }
+  // Desktop only: dock the tour card next to the highlighted target instead of
+  // the fixed bottom-center position. Mobile keeps the original docked layout.
+  const TOUR_MOBILE_BREAKPOINT = 560;
+  function positionCardNearTarget(card, rect){
+    const gap = 14, margin = 12;
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const cw = card.offsetWidth, ch = card.offsetHeight;
+    let left, top;
+    if(rect.hy + rect.hh + gap + ch + margin <= vh){
+      top = rect.hy + rect.hh + gap;
+      left = rect.hx + rect.hw/2 - cw/2;
+    }else if(rect.hy - gap - ch >= margin){
+      top = rect.hy - gap - ch;
+      left = rect.hx + rect.hw/2 - cw/2;
+    }else if(rect.hx + rect.hw + gap + cw + margin <= vw){
+      left = rect.hx + rect.hw + gap;
+      top = rect.hy + rect.hh/2 - ch/2;
+    }else if(rect.hx - gap - cw >= margin){
+      left = rect.hx - gap - cw;
+      top = rect.hy + rect.hh/2 - ch/2;
+    }else{
+      left = vw/2 - cw/2;
+      top = vh - ch - margin;
+    }
+    left = Math.max(margin, Math.min(left, vw - cw - margin));
+    top = Math.max(margin, Math.min(top, vh - ch - margin));
+    card.style.position = 'fixed';
+    card.style.left = left + 'px';
+    card.style.top = top + 'px';
   }
   function renderStep(){
     clearTips();
@@ -1371,7 +1412,7 @@
       const fullyVisible = r.top >= 0 && r.bottom <= window.innerHeight;
       if(!fullyVisible) firstTarget.scrollIntoView({ block:'center' });
     }
-    highlightTargets(step.targets);
+    const highlightRect = highlightTargets(step.targets);
 
     const card = document.createElement('div');
     card.className = 'tour-card';
@@ -1390,6 +1431,9 @@
         </div>
       </div>`;
     tipsChips.appendChild(card);
+    if(highlightRect && window.innerWidth > TOUR_MOBILE_BREAKPOINT){
+      positionCardNearTarget(card, highlightRect);
+    }
 
     document.getElementById('tourSkip').addEventListener('click', hideTips);
     const backBtn = document.getElementById('tourBack');
@@ -1616,9 +1660,6 @@
       pushMs(saved.ms);
     }else{
       pushMs(msFromTempo(bpm, 4, 'straight'));
-    }
-    if(!(await hasTipsSeen())){
-      setTimeout(showTips, 600);
     }
     const scratchSaved = await loadScratchState();
     if(scratchSaved){
