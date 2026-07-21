@@ -19,8 +19,8 @@
     --sr: #86a3b8;
     --sr-glow: rgba(134,163,184,0.35);
     --text: #ececec;
-    --text-muted: #8c8c8c;
-    --text-faint: #5e5e5e;
+    --text-muted: #969696;
+    --text-faint: #7a7a7a;
     --danger: #ff7a68;
     --good: #7fd99a;
   }
@@ -83,7 +83,7 @@
     right:10px;
     display:flex;
     gap:7px;
-	scale:125%
+	scale:130%
   }
   .icon-btn{
     width:22px;
@@ -92,11 +92,11 @@
     align-items:center;
     justify-content:center;
     background:none;
-    border:1px solid var(--border);
+    border:1px solid var(--active-border);
     border-radius:50%;
     color:var(--text-faint);
     cursor:pointer;
-    padding:0;
+    padding:1px;
     transition: border-color 120ms ease, color 120ms ease;
   }
   .icon-btn:hover{ border-color:var(--active-border); color:var(--text); }
@@ -237,7 +237,7 @@
     letter-spacing:0.13em;
     color:var(--text-faint);
     text-transform:uppercase;
-    margin-bottom:8px;
+    margin-bottom:6px;
   }
   .readout.is-sr .label{ color:var(--sr); }
   .readout .label-row{
@@ -245,7 +245,7 @@
     align-items:center;
     justify-content:space-between;
     gap:6px;
-    margin-bottom:8px;
+    margin-bottom:6px;
   }
   .readout .label-row .label{ margin-bottom:0; }
   .sr-select-inline{
@@ -742,8 +742,10 @@
   <header>
     <div class="header-icons">
       <div class="audio-menu-wrap">
-        <button class="icon-btn" id="waveAudioBtn" aria-label="Click track audio mode" title="Click track audio mode" aria-haspopup="true" aria-expanded="false"></button>
-        <div class="audio-menu" id="audioMenu" hidden>
+        <button class="icon-btn" id="waveAudioBtn" aria-label="Click track audio mode" title="Click track audio mode" aria-haspopup="true" aria-expanded="false">
+		</button>
+        
+		<div class="audio-menu" id="audioMenu" hidden>
           <div class="audio-menu-modes">
             <button class="audio-mode-opt" data-mode="off">Off </button>
             <button class="audio-mode-opt" data-mode="click">Click </button>
@@ -756,10 +758,10 @@
         </div>
       </div>
       <button class="icon-btn" id="tipsBtn" aria-label="Show field tips" title="Show field tips">
-        <svg viewBox="0 0 16 16" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <svg viewBox="0 0 16 16" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="8" cy="8" r="6.2"/>
           <line x1="8" y1="7.2" x2="8" y2="11.3"/>
-          <circle cx="8" cy="4.9" r="0.15" fill="currentColor" stroke-width="1.9"/>
+          <circle cx="8" cy="4.9" r="0.8" fill="currentColor" stroke-width="0"/>
         </svg>
       </button>
       <button class="icon-btn reset-btn" id="resetBtn" aria-label="Reset to defaults" title="Reset to defaults">
@@ -775,7 +777,6 @@
   </header>
 
   <section>
-    <div class="row-label">Tempo</div>
     <div class="bpm-row">
       <button class="lock-btn" id="bpmLockBtn" aria-pressed="true">
         <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7.2" width="8" height="7" rx="1.2"/><path d="M6 7.2V5.2a2 2 0 0 1 4 0v2"/></svg>
@@ -811,7 +812,6 @@
   </section>
 
   <section style="margin-bottom:6px;">
-    <div class="row-label">Values</div>
     <div class="field-grid">
       <div class="readout">
         <div class="label">Milliseconds</div>
