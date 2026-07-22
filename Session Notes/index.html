@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Notes — Wavelength</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #131313; --panel: #191919; --panel-2: #212121;
+    --border: #303030; --border-lo: #242424; --active-border: #565656;
+    --led: #ffb454; --led-glow: rgba(255,180,84,0.4);
+    --sr: #86a3b8; --sr-glow: rgba(134,163,184,0.35);
+    --text: #ececec; --text-muted: #969696; --text-faint: #7a7a7a;
+    --danger: #ff7a68; --good: #7fd99a;
+  }
+  *{ box-sizing: border-box; }
+  body{
+    margin:0; min-height:100vh; background: var(--bg); color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
+    padding:30px 16px 60px;
+  }
+  .unit{
+    width:100%; max-width:680px; background: var(--panel);
+    border:1px solid var(--border); border-radius:12px; padding:20px 24px 22px;
+  }
+  header{ position:relative; padding-bottom:14px; margin-bottom:18px; border-bottom:1px solid var(--border-lo); }
+  .header-icons{ position:absolute; top:0; right:10px; display:flex; gap:7px; }
+  .icon-btn{
+    width:22px; height:22px; display:flex; align-items:center; justify-content:center;
+    background:none; border:1px solid var(--active-border); border-radius:50%;
+    color:var(--text-faint); cursor:pointer; padding:1px;
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+  .icon-btn:hover{ border-color:var(--active-border); color:var(--text); }
+  .dl-menu-wrap{ position:relative; }
+  .dl-menu{
+    position:absolute; top:calc(100% + 8px); right:0; z-index:30;
+    display:flex; flex-direction:column; gap:2px; min-width:150px;
+    background:var(--panel); border:1px solid var(--border); border-radius:8px;
+    padding:6px; box-shadow:0 10px 28px rgba(0,0,0,0.5);
+  }
+  .dl-menu[hidden]{ display:none; }
+  .dl-opt{
+    display:flex; flex-direction:column; align-items:flex-start; gap:1px;
+    padding:6px 10px; border:none; border-radius:6px; background:none;
+    color:var(--text-muted); font-family:'IBM Plex Mono', monospace; font-size:12px;
+    text-align:left; cursor:pointer; transition: background 100ms ease, color 100ms ease;
+  }
+  .dl-opt:hover{ background:var(--panel-2); color:var(--text); }
+  .dl-opt-sub{ font-size:9px; letter-spacing:0.03em; color:var(--text-faint); font-family:'IBM Plex Sans', sans-serif; }
+  .brand{
+    font-family:'IBM Plex Mono', monospace; margin:0; font-size:16px; font-weight:300;
+    letter-spacing:0.14em; color:var(--text-faint); text-transform:lowercase;
+  }
+  .site-wordmark{ display:flex; justify-content:center; margin:0 0 18px; width:100%; max-width:680px; }
+  .site-wordmark svg{ display:block; height:55px; width:auto; }
+  .site-nav{ display:flex; gap:20px; justify-content:center; width:100%; max-width:680px; margin:0 0 18px; }
+  .site-nav a{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:500;
+    letter-spacing:0.14em; text-transform:lowercase; text-decoration:none; color:var(--text-faint);
+    padding-bottom:4px; border-bottom:1px solid transparent;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .site-nav a:hover{ color:var(--text-muted); }
+  .site-nav a.active{ color:var(--sr); border-color:var(--sr-glow); }
+
+  section{ margin-bottom:22px; }
+  section:last-child{ margin-bottom:0; }
+
+  .source-row{ display:flex; flex-direction:column; gap:12px; }
+  .source-row[hidden]{ display:none; }
+  .dropzone{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+    width:100%; padding:30px 16px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:8px; cursor:pointer; text-align:center;
+    transition: border-color 120ms ease, background 120ms ease;
+  }
+  .dropzone:hover, .dropzone.drag-over{ border-color:var(--active-border); background:#242424; }
+  .dropzone .dz-title{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; color:var(--text); }
+  .dropzone .dz-sub{ font-family:'IBM Plex Sans', sans-serif; font-size:11px; color:var(--text-faint); }
+  .source-or{
+    text-align:center; font-family:'IBM Plex Mono', monospace; font-size:9.5px;
+    letter-spacing:0.14em; text-transform:uppercase; color:var(--text-faint);
+  }
+  .manual-form{ display:flex; gap:8px; align-items:center; }
+  .manual-form input[type="text"]{
+    background:var(--panel-2); border:1px solid var(--border); border-radius:7px; color:var(--text);
+    font-family:'IBM Plex Mono', monospace; font-size:12px; padding:9px 10px; outline:none; min-width:0;
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+  .manual-form input[type="text"]::placeholder{ color:var(--text-faint); }
+  .manual-form input[type="text"]:focus{ border-color:var(--active-border); }
+  .manual-form .len-input{ flex:0 0 70px; text-align:center; }
+  .manual-form .len-input.invalid{ border-color:var(--danger); color:var(--danger); }
+  .manual-form .label-input{ flex:1; }
+  .manual-form .start-btn{
+    flex:0 0 auto; font-family:'IBM Plex Mono', monospace; font-size:11px; font-weight:600;
+    letter-spacing:0.04em; text-transform:uppercase; color:var(--text-muted); background:var(--panel-2);
+    border:1px solid var(--border); border-radius:7px; padding:9px 16px; cursor:pointer;
+    transition: border-color 120ms ease, color 120ms ease;
+  }
+  .manual-form .start-btn:hover{ border-color:var(--active-border); color:var(--text); }
+  .manual-form .start-btn:active{ transform:scale(0.96); }
+
+  .file-info{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; background:var(--panel-2);
+    border:1px solid var(--border); border-radius:8px; padding:11px 14px;
+  }
+  .file-info[hidden]{ display:none; }
+  .file-info-main{ min-width:0; }
+  .file-info-name{ font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .file-info-sub{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--text-faint); margin-top:2px; }
+  .change-file-btn{
+    flex:0 0 auto; font-family:'IBM Plex Mono', monospace; font-size:10.5px; letter-spacing:0.04em;
+    color:var(--text-muted); background:none; border:1px solid var(--border); border-radius:6px;
+    padding:6px 10px; cursor:pointer; transition: border-color 120ms ease, color 120ms ease; white-space:nowrap;
+  }
+  .change-file-btn:hover{ border-color:var(--active-border); color:var(--text); }
+
+  .transport{ display:flex; align-items:center; gap:12px; margin-top:14px; }
+  .play-btn{
+    flex:0 0 38px; width:38px; height:38px; display:flex; align-items:center; justify-content:center;
+    background:var(--panel-2); border:1px solid var(--border); border-radius:50%; color:var(--led);
+    cursor:pointer; transition: border-color 120ms ease, transform 100ms ease;
+  }
+  .play-btn:hover{ border-color:var(--active-border); }
+  .play-btn:active{ transform:scale(0.92); }
+  .play-btn:disabled{ opacity:0.4; cursor:default; }
+  .play-btn svg{ width:15px; height:15px; }
+  .time-display{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; font-weight:600; color:var(--text-muted); white-space:nowrap; }
+  .time-display .cur{ color:var(--led); text-shadow:0 0 6px var(--led-glow); }
+  .vol-wrap{ display:flex; align-items:center; gap:7px; margin-left:auto; }
+  .vol-wrap[hidden]{ display:none; }
+  .vol-wrap .icon-btn{ flex:0 0 22px; width:22px; height:22px; display:flex; align-items:center; justify-content:center; background:none; border:1px solid var(--active-border); border-radius:50%; color:var(--text-faint); cursor:pointer; transition: color 120ms ease; }
+  .vol-wrap .icon-btn:hover{ color:var(--text); }
+  .vol-wrap .icon-btn svg{ width:14px; height:14px; }
+  .vol-slider{ width:80px; accent-color: var(--sr); cursor:pointer; }
+
+  .timeline-wrap{ position:relative; margin-top:18px; }
+  .timeline-wrap.is-empty .wave-strip{ opacity:0.5; }
+  .marker-rail{ position:relative; height:14px; }
+  .wave-strip{
+    position:relative; width:100%; height:96px; background:var(--panel-2); border:1px solid var(--border);
+    border-radius:8px; overflow:hidden; cursor:pointer;
+  }
+  .wave-progress-bg{ position:absolute; inset:0; width:0%; background:var(--led); opacity:0.07; pointer-events:none; }
+  .wave-strip svg{ position:relative; display:block; width:100%; height:100%; }
+  .wave-strip .wave-empty{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-size:11px; color:var(--text-faint); letter-spacing:0.04em; pointer-events:none;
+  }
+  .note-marker{
+    position:absolute; top:50%; width:8px; height:8px; background:var(--led); box-shadow:0 0 6px var(--led-glow);
+    transform:translate(-50%,-50%) rotate(45deg); border-radius:1.5px; cursor:grab; touch-action:none;
+    transition: transform 120ms ease, box-shadow 120ms ease;
+  }
+  .note-marker:hover, .note-marker.is-linked{ transform:translate(-50%,-50%) rotate(45deg) scale(1.35); box-shadow:0 0 10px var(--led-glow); }
+  .note-marker.is-active{ transform:translate(-50%,-50%) rotate(45deg) scale(1.5); box-shadow:0 0 14px var(--led-glow); }
+  .note-marker.dragging{ cursor:grabbing; transform:translate(-50%,-50%) rotate(45deg) scale(1.5); box-shadow:0 0 14px var(--led-glow); }
+  @keyframes pop-glow{ 0%{ opacity:0; filter:brightness(2.6); } 100%{ opacity:1; filter:brightness(1); } }
+  .note-marker.pop{ animation:pop-glow 260ms ease-out; }
+  .playhead{ position:absolute; top:0; bottom:0; width:2px; background:var(--led); box-shadow:0 0 6px var(--led-glow); pointer-events:none; left:0; }
+  @keyframes playhead-pulse{ 0%,100%{ box-shadow:0 0 6px var(--led-glow); } 50%{ box-shadow:0 0 12px var(--led-glow); } }
+  .playhead.is-playing{ animation: playhead-pulse 1.6s ease-in-out infinite; }
+
+  .new-note-row{ display:flex; gap:8px; justify-content:center; align-items:center; margin-top:14px; }
+  .new-note-btn{
+    font-family:'IBM Plex Mono', monospace; font-size:11.5px; font-weight:600; letter-spacing:0.05em;
+    text-transform:uppercase; color:#171310; background:var(--led); border:1px solid var(--led); border-radius:7px;
+    padding:9px 22px; cursor:pointer; transition: filter 120ms ease, opacity 120ms ease, transform 100ms ease;
+  }
+  .new-note-btn:hover{ filter:brightness(1.08); }
+  .new-note-btn:active{ transform:scale(0.96); }
+  .new-note-btn:disabled{ opacity:0.35; cursor:default; filter:none; }
+  .new-note-btn[hidden]{ display:none; }
+  .live-compose{
+    flex:0 1 280px; background:var(--panel-2); border:1px solid var(--led); border-radius:7px; color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; padding:9px 12px; outline:none;
+  }
+  .live-compose::placeholder{ color:var(--text-faint); }
+  .live-compose[hidden]{ display:none; }
+  .live-toggle{
+    flex:0 0 auto; font-family:'IBM Plex Mono', monospace; font-size:9.5px; font-weight:600; letter-spacing:0.08em;
+    color:var(--text-faint); background:var(--panel-2); border:1px solid var(--border); border-radius:6px;
+    padding:8px 10px; cursor:pointer; transition: all 120ms ease;
+  }
+  .live-toggle:hover{ border-color:var(--active-border); color:var(--text-muted); }
+  .live-toggle.active{ background:var(--led); border-color:var(--led); color:#171310; }
+  .live-toggle:disabled{ opacity:0.35; cursor:default; }
+
+  .notes-list{ display:flex; flex-direction:column; gap:8px; }
+  .notes-empty{ font-family:'IBM Plex Sans', sans-serif; font-size:12px; color:var(--text-faint); text-align:center; padding:18px 8px; }
+  .note-item{
+    display:flex; gap:10px; background:var(--panel-2); border:1px solid var(--border); border-left:2px solid transparent;
+    border-radius:8px; padding:10px 12px; transition: border-color 150ms ease, background 150ms ease;
+  }
+  .note-item.is-linked{ border-left-color:var(--led); background:#211d15; }
+  @keyframes flash-glow{ 0%{ border-left-color:var(--led); background:#2c2410; box-shadow:0 0 0 1px var(--led-glow) inset; } 100%{ border-left-color:var(--border); background:var(--panel-2); box-shadow:none; } }
+  .note-item.flash{ animation:flash-glow 900ms ease-out; }
+  @keyframes pop-in{ from{ transform:scale(0.92); opacity:0; } to{ transform:scale(1); opacity:1; } }
+  .note-item.pop{ animation:pop-in 200ms cubic-bezier(.34,1.56,.64,1); }
+  .note-controls{ flex:0 0 auto; display:flex; flex-direction:column; align-items:center; gap:7px; padding-top:2px; }
+  .note-diamond{
+    width:9px; height:9px; background:var(--led); transform:rotate(45deg); border-radius:1.5px; cursor:pointer;
+    border:none; padding:0; box-shadow:0 0 4px var(--led-glow); transition: transform 120ms ease;
+  }
+  .note-diamond:hover{ transform:rotate(45deg) scale(1.3); }
+  .note-time{
+    width:60px; background:none; border:1px solid var(--border); border-radius:5px; text-align:center;
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600; color:var(--led); padding:3px 2px;
+  }
+  .note-time:focus{ outline:1px solid var(--text-muted); outline-offset:1px; }
+  .note-body{ flex:1; min-width:0; display:flex; flex-direction:column; }
+  .note-text{
+    display:block; width:100%; background:none; border:none; outline:none; font-family:'IBM Plex Sans', sans-serif;
+    font-size:12.5px; color:var(--text); resize:vertical; min-height:38px; padding:0;
+  }
+  .note-text::placeholder{ color:var(--text-faint); }
+  .note-delete{
+    flex:0 0 auto; align-self:flex-start; background:none; border:none; color:var(--text-faint); font-size:16px;
+    line-height:1; padding:2px 4px; cursor:pointer; transition: color 120ms ease;
+  }
+  .note-delete:hover{ color:var(--danger); }
+
+  input:focus-visible, textarea:focus-visible, button:focus-visible{ outline:1px solid var(--text-muted); outline-offset:2px; }
+
+  @media (max-width:560px){
+    :root{ --mobile-zoom:1; }
+    body{ zoom:var(--mobile-zoom); }
+    .site-wordmark svg{ height:47px; }
+    .vol-slider{ width:56px; }
+    .live-compose{ flex:1 1 auto; }
+  }
+</style>
+</head>
+<body>
+
+<span class="site-wordmark">
+  <svg viewBox="0 0 4753 1005" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Wavelength">
+<g transform="matrix(3.614665,0,0,3.996675,3.419419,14.284568)">
+        <path d="M177.74,184.174L154.841,184.174L111.769,105.031L67.879,184.174L67.879,185.407L0.545,62.378L23.444,62.378L67.879,143.986L67.879,142.753L110.952,62.871L110.952,62.378L111.769,62.378L111.769,63.61L177.74,184.174Z" style="fill:white;fill-rule:nonzero;"/>
+        <g transform="matrix(1,0,0,1,-48.103008,0)">
+            <path d="M436.718,110.948L460.163,110.948L420.089,183.188L420.089,184.421L353.573,62.624L376.199,62.624L420.089,143.493L420.089,142.26L436.718,110.948Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(-1,-0,0,-1,658.261259,247.044828)">
+            <path d="M436.718,110.948L460.163,110.948L420.089,183.188L420.089,184.421L353.573,62.624L376.199,62.624L420.089,143.493L420.089,142.26L436.718,110.948Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,-48.103008,0)">
+            <path d="M549.033,185.653C539.582,185.653 530.723,184.051 522.453,180.846C514.184,177.641 506.96,173.244 500.781,167.655C494.602,162.067 489.74,155.533 486.197,148.054C482.653,140.576 480.881,132.563 480.881,124.016C480.881,115.633 482.653,107.702 486.197,100.223C489.74,92.745 494.602,86.211 500.781,80.622C506.96,75.034 514.184,70.596 522.453,67.309C530.723,64.021 539.582,62.378 549.033,62.378C558.301,62.378 567.07,64.021 575.339,67.309C583.609,70.596 590.833,75.034 597.012,80.622C603.191,86.211 608.098,92.745 611.733,100.223C615.367,107.702 617.185,115.633 617.185,124.016L617.185,135.85L576.424,135.85L576.424,117.359L596.739,117.359C596.739,112.428 595.512,107.743 593.059,103.305C590.606,98.867 587.198,95.005 582.836,91.717C578.474,88.43 573.386,85.8 567.57,83.828C561.754,81.855 555.575,80.869 549.033,80.869C542.308,80.869 536.038,81.978 530.223,84.197C524.407,86.416 519.364,89.498 515.093,93.443C510.822,97.388 507.46,101.99 505.007,107.25C502.553,112.51 501.326,118.098 501.326,124.016C501.326,130.097 502.553,135.768 505.007,141.028C507.46,146.287 510.822,150.849 515.093,154.711C519.364,158.574 524.407,161.615 530.223,163.834C536.038,166.053 542.308,167.162 549.033,167.162L549.033,185.653Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,-48.103008,0)">
+            <rect x="637.358" y="-0" width="20.446" height="185.16" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,-48.103008,0)">
+            <path d="M746.946,185.653C737.496,185.653 728.636,184.051 720.367,180.846C712.098,177.641 704.874,173.244 698.695,167.655C692.516,162.067 687.654,155.533 684.11,148.054C680.566,140.576 678.794,132.563 678.794,124.016C678.794,115.633 680.566,107.702 684.11,100.223C687.654,92.745 692.516,86.211 698.695,80.622C704.874,75.034 712.098,70.596 720.367,67.309C728.636,64.021 737.496,62.378 746.946,62.378C756.215,62.378 764.984,64.021 773.253,67.309C781.522,70.596 788.746,75.034 794.925,80.622C801.104,86.211 806.011,92.745 809.646,100.223C813.281,107.702 815.098,115.633 815.098,124.016L815.098,135.85L774.337,135.85L774.337,117.359L794.653,117.359C794.653,112.428 793.426,107.743 790.972,103.305C788.519,98.867 785.111,95.005 780.75,91.717C776.388,88.43 771.299,85.8 765.484,83.828C759.668,81.855 753.489,80.869 746.946,80.869C740.222,80.869 733.952,81.978 728.136,84.197C722.321,86.416 717.277,89.498 713.007,93.443C708.736,97.388 705.374,101.99 702.92,107.25C700.467,112.51 699.24,118.098 699.24,124.016C699.24,130.097 700.467,135.768 702.92,141.028C705.374,146.287 708.736,150.849 713.007,154.711C717.277,158.574 722.321,161.615 728.136,163.834C733.952,166.053 740.222,167.162 746.946,167.162L746.946,185.653Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,-48.103008,0)">
+            <path d="M835.271,123.276C835.271,114.729 837.089,106.716 840.723,99.237C844.358,91.758 849.265,85.203 855.444,79.571C861.623,73.939 868.848,69.501 877.117,66.257C885.386,63.013 894.246,61.391 903.696,61.391C913.146,61.391 922.006,63.032 930.275,66.315C938.544,69.594 945.814,74.064 952.084,79.725C958.354,85.383 963.306,91.945 966.941,99.41C970.576,106.874 972.393,114.87 972.393,123.399L972.393,185.16L951.675,185.16L951.675,123.276C951.675,117.359 950.448,111.77 947.995,106.51C945.541,101.251 942.134,96.648 937.772,92.703C933.41,88.759 928.322,85.636 922.506,83.334C916.69,81.033 910.42,79.883 903.696,79.883C896.972,79.883 890.702,81.033 884.886,83.334C879.07,85.636 873.982,88.759 869.62,92.703C865.258,96.648 861.851,101.251 859.397,106.51C856.944,111.77 855.717,117.359 855.717,123.276L835.271,123.276Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,-48.103008,0)">
+            <path d="M1128.598,184.667C1128.598,193.05 1126.826,200.981 1123.282,208.459C1119.738,215.938 1114.876,222.472 1108.697,228.06C1102.518,233.649 1095.294,238.046 1087.025,241.251C1078.756,244.456 1069.896,246.059 1060.446,246.059C1051.177,246.059 1042.544,245.155 1034.548,243.347C1026.551,241.539 1019.6,238.991 1013.693,235.703C1007.787,232.416 1002.971,228.512 999.245,223.992C995.519,219.472 993.293,214.5 992.566,209.076L1017.101,209.076C1018.191,211.706 1019.645,214.171 1021.463,216.472C1023.28,218.774 1025.824,220.787 1029.096,222.513C1032.367,224.239 1036.502,225.554 1041.499,226.458C1046.497,227.362 1060.446,227.567 1060.446,227.567C1060.446,227.567 1073.44,226.458 1079.256,224.239C1085.071,222.02 1090.114,218.979 1094.385,215.116C1098.656,211.254 1102.018,206.693 1104.472,201.433C1106.925,196.173 1108.152,190.584 1108.152,184.667L1108.152,123.176C1108.152,117.271 1106.925,111.696 1104.472,106.449C1102.018,101.202 1098.656,96.611 1094.385,92.676C1090.114,88.739 1085.071,85.664 1079.256,83.45C1073.44,81.236 1067.17,80.129 1060.446,80.129C1054.085,80.129 1048.042,81.236 1042.317,83.45C1036.592,85.661 1031.549,88.734 1027.187,92.669C1022.826,96.601 1019.373,101.19 1016.828,106.437C1014.284,111.682 1013.012,117.253 1013.012,123.153C1013.012,129.052 1014.284,134.625 1016.828,139.872C1019.373,145.116 1022.826,149.706 1027.187,153.64C1031.549,157.572 1036.592,160.645 1042.317,162.859C1048.042,165.07 1054.085,166.176 1060.446,166.176L1060.446,184.667C1051.177,184.667 1042.408,183.065 1034.139,179.859C1025.87,176.654 1018.646,172.299 1012.467,166.792C1006.287,161.286 1001.426,154.793 997.882,147.315C994.338,139.836 992.566,131.741 992.566,123.029C992.566,114.647 994.338,106.716 997.882,99.237C1001.426,91.758 1006.287,85.225 1012.467,79.636C1018.646,74.048 1025.87,69.651 1034.139,66.446C1042.408,63.241 1051.177,61.638 1060.446,61.638C1069.896,61.638 1078.756,63.241 1087.025,66.446C1095.294,69.651 1102.518,74.048 1108.697,79.636C1114.876,85.225 1119.738,91.758 1123.282,99.237C1126.826,106.716 1128.598,114.647 1128.598,123.029L1128.598,184.667Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,-48.103008,0)">
+            <path d="M1216.923,166.422L1216.923,184.914C1207.472,184.914 1198.612,183.311 1190.343,180.106C1182.074,176.901 1174.85,172.504 1168.671,166.916C1162.492,161.327 1157.63,154.793 1154.087,147.315C1150.543,139.836 1148.771,131.823 1148.771,123.276L1148.771,-0.247L1216.923,-0.247L1216.923,18.245L1169.216,18.245L1169.216,123.276C1169.216,129.193 1170.443,134.782 1172.896,140.041C1175.35,145.301 1178.758,149.903 1183.119,153.848C1187.481,157.793 1192.57,160.875 1198.385,163.094C1204.201,165.313 1210.38,166.422 1216.923,166.422Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+        <g transform="matrix(1,0,0,1,-48.103008,0)">
+            <path d="M1292.163,80.129L1237.641,80.129L1237.641,-0L1258.087,-0L1258.087,61.638L1292.163,61.638C1301.613,61.638 1310.473,63.282 1318.742,66.569C1327.011,69.856 1334.235,74.294 1340.414,79.883C1346.593,85.471 1351.5,92.005 1355.135,99.484C1358.77,106.962 1360.587,114.975 1360.587,123.522L1360.587,185.16L1339.869,185.16L1339.869,123.376C1339.869,117.282 1338.642,111.598 1336.189,106.325C1333.735,101.053 1330.373,96.481 1326.102,92.611C1321.831,88.738 1316.788,85.69 1310.972,83.465C1305.157,81.241 1298.887,80.129 1292.163,80.129Z" style="fill:white;fill-rule:nonzero;"/>
+        </g>
+    </g>
+</svg>
+</span>
+
+<nav class="site-nav">
+  <a href="musical-calculator.html">Calculator</a>
+  <a href="session-notes.html" class="active">Session Notes</a>
+</nav>
+
+<div class="unit">
+  <header>
+    <div class="header-icons">
+      <div class="dl-menu-wrap">
+        <button class="icon-btn" id="downloadBtn" aria-label="Download notes" title="Download notes" aria-haspopup="true" aria-expanded="false">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 2.2v7.6"/>
+            <path d="M4.6 6.4 8 9.8l3.4-3.4"/>
+            <path d="M3 12.6h10"/>
+          </svg>
+        </button>
+        <div class="dl-menu" id="downloadMenu" hidden>
+          <button class="dl-opt" data-format="txt">.txt <span class="dl-opt-sub">plain timestamps</span></button>
+          <button class="dl-opt" data-format="md">.md <span class="dl-opt-sub">formatted list</span></button>
+        </div>
+      </div>
+    </div>
+    <div class="brand">Session Notes</div>
+  </header>
+
+  <section>
+    <input type="file" id="fileInput" accept="audio/*" hidden>
+    <div class="source-row" id="sourceRow">
+      <div class="dropzone" id="dropzone">
+        <div class="dz-title">Choose an audio file</div>
+        <div class="dz-sub">Stays on your device, nothing is uploaded.</div>
+      </div>
+      <div class="source-or">or</div>
+      <div class="manual-form">
+        <input type="text" id="manualLabel" class="label-input" placeholder="label">
+        <input type="text" id="manualLength" class="len-input" placeholder="0:00">
+        <button class="start-btn" id="manualStartBtn">Start</button>
+      </div>
+    </div>
+    <div class="file-info" id="fileInfo" hidden>
+      <div class="file-info-main">
+        <div class="file-info-name" id="fileName"></div>
+        <div class="file-info-sub" id="fileSub"></div>
+      </div>
+      <button class="change-file-btn" id="changeFileBtn">Change</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="transport">
+      <button class="play-btn" id="playBtn" disabled aria-label="Play">
+        <svg id="playIcon" viewBox="0 0 16 16" fill="currentColor" stroke="none"><path d="M4.5 3.2v9.6l8-4.8-8-4.8z"/></svg>
+      </button>
+      <div class="time-display"><span class="cur" id="curTime">0:00</span> / <span id="durTime">0:00</span></div>
+      <div class="vol-wrap" id="volWrap">
+        <button class="icon-btn" id="muteBtn" aria-label="Mute">
+          <svg id="volIcon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1.5 6.2h2.3l3.4-2.8v9.2l-3.4-2.8H1.5z"/><path d="M10.6 5.4a3 3 0 0 1 0 5.2"/><path d="M12.6 3.6a6 6 0 0 1 0 8.8"/>
+          </svg>
+        </button>
+        <input type="range" class="vol-slider" id="volSlider" min="0" max="1" step="0.01" value="0.8" aria-label="Volume">
+      </div>
+    </div>
+
+    <div class="timeline-wrap is-empty" id="timelineWrap">
+      <div class="marker-rail" id="markerRail"></div>
+      <div class="wave-strip" id="waveStrip">
+        <div class="wave-progress-bg" id="waveProgressBg"></div>
+        <svg id="waveSvg" viewBox="0 0 500 100" preserveAspectRatio="none" aria-hidden="true">
+          <defs><clipPath id="progressClip"><rect id="progressClipRect" x="0" y="0" width="0" height="100"/></clipPath></defs>
+          <path id="wavePath" fill="var(--text-muted)" fill-opacity="0.35" stroke="var(--text-muted)" stroke-opacity="0.55" stroke-width="0.6" vector-effect="non-scaling-stroke"/>
+          <path id="waveProgressPath" fill="var(--led)" fill-opacity="0.55" stroke="var(--led)" stroke-opacity="0.85" stroke-width="0.6" vector-effect="non-scaling-stroke" clip-path="url(#progressClip)"/>
+        </svg>
+        <div class="wave-empty" id="waveEmptyMsg">No audio loaded</div>
+      </div>
+      <div class="playhead" id="playhead"></div>
+    </div>
+
+    <div class="new-note-row">
+      <button class="new-note-btn" id="newNoteBtn" disabled>+ Note</button>
+      <input type="text" class="live-compose" id="liveCompose" placeholder="…" hidden>
+      <button class="live-toggle" id="liveToggle" disabled aria-pressed="false" title="Live-type mode">LIVE</button>
+    </div>
+  </section>
+
+  <section style="margin-bottom:0;">
+    <div class="notes-list" id="notesList">
+      <div class="notes-empty" id="notesEmpty">No notes yet.</div>
+    </div>
+  </section>
+</div>
+
+<audio id="audioEl" preload="auto"></audio>
+
+<script>
+(function(){
+  'use strict';
+  const BUCKETS = 500;
+
+  const fileInput = document.getElementById('fileInput');
+  const sourceRow = document.getElementById('sourceRow');
+  const dropzone = document.getElementById('dropzone');
+  const manualLabel = document.getElementById('manualLabel');
+  const manualLength = document.getElementById('manualLength');
+  const manualStartBtn = document.getElementById('manualStartBtn');
+  const fileInfo = document.getElementById('fileInfo');
+  const fileNameEl = document.getElementById('fileName');
+  const fileSubEl = document.getElementById('fileSub');
+  const changeFileBtn = document.getElementById('changeFileBtn');
+
+  const audioEl = document.getElementById('audioEl');
+  const playBtn = document.getElementById('playBtn');
+  const playIcon = document.getElementById('playIcon');
+  const curTimeEl = document.getElementById('curTime');
+  const durTimeEl = document.getElementById('durTime');
+  const volWrap = document.getElementById('volWrap');
+  const muteBtn = document.getElementById('muteBtn');
+  const volIcon = document.getElementById('volIcon');
+  const volSlider = document.getElementById('volSlider');
+
+  const timelineWrap = document.getElementById('timelineWrap');
+  const markerRail = document.getElementById('markerRail');
+  const waveStrip = document.getElementById('waveStrip');
+  const waveProgressBg = document.getElementById('waveProgressBg');
+  const wavePath = document.getElementById('wavePath');
+  const waveProgressPath = document.getElementById('waveProgressPath');
+  const progressClipRect = document.getElementById('progressClipRect');
+  const waveEmptyMsg = document.getElementById('waveEmptyMsg');
+  const playhead = document.getElementById('playhead');
+  const newNoteBtn = document.getElementById('newNoteBtn');
+  const liveCompose = document.getElementById('liveCompose');
+  const liveToggle = document.getElementById('liveToggle');
+
+  const notesListEl = document.getElementById('notesList');
+  const notesEmptyEl = document.getElementById('notesEmpty');
+
+  const PLAY_SVG = '<path d="M4.5 3.2v9.6l8-4.8-8-4.8z"/>';
+  const PAUSE_SVG = '<rect x="3.8" y="3" width="3" height="10" rx="0.6"/><rect x="9.2" y="3" width="3" height="10" rx="0.6"/>';
+  const SPEAKER_ON_SVG = '<path d="M1.5 6.2h2.3l3.4-2.8v9.2l-3.4-2.8H1.5z"/><path d="M10.6 5.4a3 3 0 0 1 0 5.2"/><path d="M12.6 3.6a6 6 0 0 1 0 8.8"/>';
+  const SPEAKER_OFF_SVG = '<path d="M1.5 6.2h2.3l3.4-2.8v9.2l-3.4-2.8H1.5z"/><path d="M10.6 5.6l3.6 4.8"/><path d="M14.2 5.6l-3.6 4.8"/>';
+
+  let objectUrl = null;
+  let currentFileKey = null;
+  let mode = null;
+  let duration = 0;
+  let notes = [];
+  let rafId = null;
+  let dragNoteId = null, dragMoved = false;
+  let manualElapsed = 0, manualRunning = false, manualLastTs = 0;
+  let lastCheckTime = 0;
+  let liveMode = false, liveNote = null;
+
+  function slugify(name){ return 'session-notes:' + name.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 150); }
+  let saveTimer = null;
+  function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNotes, 300); }
+  async function saveNotes(){
+    if(!currentFileKey) return;
+    const payload = JSON.stringify(notes.map(n => ({ id:n.id, time:n.time, text:n.text })));
+    try{ if(window.storage){ await window.storage.set(currentFileKey, payload); } else{ localStorage.setItem(currentFileKey, payload); } }catch(e){}
+  }
+  async function loadNotesFor(key){
+    try{
+      if(window.storage){ const res = await window.storage.get(key); return res ? JSON.parse(res.value) : []; }
+      const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : [];
+    }catch(e){ return []; }
+  }
+  async function saveVolumePref(v){ try{ if(window.storage){ await window.storage.set('session-notes-volume', String(v)); } else{ localStorage.setItem('session-notes-volume', String(v)); } }catch(e){} }
+  async function loadVolumePref(){
+    try{
+      if(window.storage){ const res = await window.storage.get('session-notes-volume'); return res ? parseFloat(res.value) : null; }
+      const raw = localStorage.getItem('session-notes-volume'); return raw !== null ? parseFloat(raw) : null;
+    }catch(e){ return null; }
+  }
+
+  function fmtTime(sec, withTenths){
+    if(!isFinite(sec) || sec < 0) sec = 0;
+    const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+    const sStr = withTenths ? s.toFixed(1).padStart(4, '0') : String(Math.floor(s)).padStart(2, '0');
+    return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${sStr}` : `${m}:${sStr}`;
+  }
+  function parseTime(str){
+    if(typeof str !== 'string') return NaN;
+    const parts = str.trim().split(':').filter(p => p !== '');
+    if(!parts.length) return NaN;
+    for(const p of parts){ if(!/^\d+(\.\d+)?$/.test(p)) return NaN; }
+    let total = parseFloat(parts.pop());
+    if(parts.length) total += parseInt(parts.pop(), 10) * 60;
+    if(parts.length) total += parseInt(parts.pop(), 10) * 3600;
+    return total;
+  }
+  function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+  function makeId(){ return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+  function isPaused(){ return mode === 'manual' ? !manualRunning : (mode === 'audio' ? audioEl.paused : true); }
+  function getCurrentTime(){ return mode === 'manual' ? manualElapsed : (audioEl.currentTime || 0); }
+  function getDuration(){ return duration; }
+  function doPlay(){
+    lastCheckTime = getCurrentTime();
+    if(mode === 'manual'){
+      if(manualElapsed >= duration) manualElapsed = 0;
+      manualRunning = true; manualLastTs = performance.now();
+      onPlayStateChange(true);
+    }else if(mode === 'audio'){ audioEl.play(); }
+  }
+  function doPause(){
+    if(mode === 'manual'){ manualRunning = false; onPlayStateChange(false); }
+    else if(mode === 'audio'){ audioEl.pause(); }
+  }
+  function doSeek(t){
+    const d = getDuration();
+    t = Math.min(Math.max(t, 0), d || 0);
+    lastCheckTime = t;
+    if(mode === 'manual'){ manualElapsed = t; updateTimeUI(); }
+    else if(mode === 'audio'){ audioEl.currentTime = t; updateTimeUI(); }
+  }
+  function onPlayStateChange(isPlaying){
+    playIcon.innerHTML = isPlaying ? PAUSE_SVG : PLAY_SVG;
+    playhead.classList.toggle('is-playing', isPlaying);
+    if(isPlaying) startRaf(); else { stopRaf(); updateTimeUI(); }
+  }
+  function startRaf(){
+    stopRaf();
+    const step = () => {
+      if(mode === 'manual' && manualRunning){
+        const now = performance.now();
+        manualElapsed = Math.min(duration, manualElapsed + (now - manualLastTs) / 1000);
+        manualLastTs = now;
+        updateTimeUI();
+        if(manualElapsed >= duration){ manualRunning = false; onPlayStateChange(false); return; }
+        rafId = requestAnimationFrame(step);
+      }else if(mode === 'audio' && !audioEl.paused){
+        updateTimeUI();
+        rafId = requestAnimationFrame(step);
+      }
+    };
+    rafId = requestAnimationFrame(step);
+  }
+  function stopRaf(){ if(rafId){ cancelAnimationFrame(rafId); rafId = null; } }
+  function updateTimeUI(){
+    const t = getCurrentTime(), d = getDuration();
+    curTimeEl.textContent = fmtTime(t, false);
+    if(d > 0){
+      const pct = Math.min(100, (t / d) * 100);
+      playhead.style.left = pct + '%';
+      waveProgressBg.style.width = pct + '%';
+      if(wavePath.getAttribute('d')) progressClipRect.setAttribute('width', ((t / d) * BUCKETS).toFixed(2));
+    }
+    if(!isPaused() && t > lastCheckTime){
+      notes.forEach(note => { if(note.time > lastCheckTime && note.time <= t) triggerPlaybackHit(note.id); });
+    }
+    lastCheckTime = t;
+  }
+  function triggerPlaybackHit(id){
+    pulseMarker(id);
+    const row = notesListEl.querySelector(`[data-id="${id}"]`);
+    if(row){ row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
+  }
+  audioEl.addEventListener('play', () => onPlayStateChange(true));
+  audioEl.addEventListener('pause', () => onPlayStateChange(false));
+  audioEl.addEventListener('ended', () => onPlayStateChange(false));
+  audioEl.addEventListener('timeupdate', updateTimeUI);
+  playBtn.addEventListener('click', () => { if(isPaused()) doPlay(); else doPause(); });
+
+  dropzone.addEventListener('click', () => fileInput.click());
+  changeFileBtn.addEventListener('click', resetSource);
+  fileInput.addEventListener('change', () => { const f = fileInput.files && fileInput.files[0]; if(f) loadFile(f); });
+  ['dragover','dragenter'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.add('drag-over'); }));
+  ['dragleave','drop'].forEach(evt => dropzone.addEventListener(evt, e => { e.preventDefault(); dropzone.classList.remove('drag-over'); }));
+  dropzone.addEventListener('drop', e => { const f = e.dataTransfer.files && e.dataTransfer.files[0]; if(f) loadFile(f); });
+  manualStartBtn.addEventListener('click', startManualSession);
+  [manualLabel, manualLength].forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); startManualSession(); } }));
+
+  function resetSource(){
+    audioEl.pause();
+    if(objectUrl){ URL.revokeObjectURL(objectUrl); objectUrl = null; }
+    audioEl.removeAttribute('src'); audioEl.load();
+    stopRaf();
+    mode = null; duration = 0; manualElapsed = 0; manualRunning = false; lastCheckTime = 0;
+    currentFileKey = null; notes = []; liveNote = null;
+    setLiveMode(false);
+    liveToggle.disabled = true;
+    playIcon.innerHTML = PLAY_SVG;
+    curTimeEl.textContent = '0:00'; durTimeEl.textContent = '0:00'; playhead.style.left = '0%';
+    playhead.classList.remove('is-playing');
+    wavePath.setAttribute('d', ''); waveProgressPath.setAttribute('d', '');
+    waveProgressBg.style.width = '0%';
+    waveEmptyMsg.textContent = 'No audio loaded';
+    timelineWrap.classList.add('is-empty');
+    newNoteBtn.disabled = true; playBtn.disabled = true;
+    volWrap.hidden = false;
+    markerRail.innerHTML = '';
+    renderNotes();
+    sourceRow.hidden = false; fileInfo.hidden = true;
+    manualLength.value = ''; manualLabel.value = '';
+  }
+
+  async function loadFile(file){
+    audioEl.pause();
+    if(objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = URL.createObjectURL(file);
+    audioEl.src = objectUrl;
+    mode = 'audio';
+    currentFileKey = slugify(file.name);
+    fileNameEl.textContent = file.name;
+    fileSubEl.textContent = 'Decoding waveform…';
+    sourceRow.hidden = true; fileInfo.hidden = false; volWrap.hidden = false;
+
+    playIcon.innerHTML = PLAY_SVG; curTimeEl.textContent = '0:00'; durTimeEl.textContent = '0:00'; playhead.style.left = '0%';
+    notes = await loadNotesFor(currentFileKey);
+    renderNotes();
+
+    duration = 0; waveEmptyMsg.textContent = 'Decoding…'; wavePath.setAttribute('d', ''); waveProgressPath.setAttribute('d', '');
+    timelineWrap.classList.add('is-empty');
+    newNoteBtn.disabled = true; playBtn.disabled = true; liveToggle.disabled = true;
+
+    try{
+      const arrayBuf = await file.arrayBuffer();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AC();
+      const audioBuffer = await ctx.decodeAudioData(arrayBuf.slice(0));
+      duration = audioBuffer.duration;
+      ctx.close();
+      drawWaveform(audioBuffer);
+      durTimeEl.textContent = fmtTime(duration, false);
+      fileSubEl.textContent = fmtTime(duration, false) + ' · ' + (audioBuffer.numberOfChannels === 1 ? 'mono' : 'stereo') + ' · ' + audioBuffer.sampleRate + 'Hz';
+      timelineWrap.classList.remove('is-empty');
+      waveEmptyMsg.textContent = '';
+      newNoteBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
+      renderMarkers();
+    }catch(err){
+      waveEmptyMsg.textContent = 'Could not decode this file';
+      fileSubEl.textContent = 'Waveform unavailable — playback may still work';
+      audioEl.addEventListener('loadedmetadata', function onMeta(){
+        duration = audioEl.duration || 0;
+        durTimeEl.textContent = fmtTime(duration, false);
+        timelineWrap.classList.remove('is-empty');
+        newNoteBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
+        renderMarkers();
+        audioEl.removeEventListener('loadedmetadata', onMeta);
+      });
+    }
+  }
+
+  function startManualSession(){
+    const len = parseTime(manualLength.value);
+    if(!isFinite(len) || len <= 0){
+      manualLength.classList.add('invalid'); manualLength.focus();
+      setTimeout(() => manualLength.classList.remove('invalid'), 900);
+      return;
+    }
+    resetSource();
+    mode = 'manual'; duration = len; manualElapsed = 0; manualRunning = false;
+    const label = manualLabel.value.trim() || 'Manual session';
+    currentFileKey = slugify('manual:' + label + ':' + Math.round(len));
+    fileNameEl.textContent = label;
+    fileSubEl.textContent = fmtTime(len, false);
+    sourceRow.hidden = true; fileInfo.hidden = false; volWrap.hidden = true;
+    durTimeEl.textContent = fmtTime(len, false);
+    timelineWrap.classList.remove('is-empty');
+    waveEmptyMsg.textContent = '';
+    newNoteBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
+    loadNotesFor(currentFileKey).then(n => { notes = n; renderNotes(); renderMarkers(); });
+  }
+
+  function drawWaveform(buffer){
+    const channels = [];
+    for(let c = 0; c < buffer.numberOfChannels; c++) channels.push(buffer.getChannelData(c));
+    const len = buffer.length;
+    const bucketSize = Math.max(1, Math.floor(len / BUCKETS));
+    const peaks = new Array(BUCKETS).fill(0);
+    for(let i = 0; i < BUCKETS; i++){
+      const start = i * bucketSize, end = Math.min(len, start + bucketSize);
+      let maxAbs = 0;
+      for(let c = 0; c < channels.length; c++){
+        const data = channels[c];
+        for(let j = start; j < end; j++){ const a = Math.abs(data[j]); if(a > maxAbs) maxAbs = a; }
+      }
+      peaks[i] = maxAbs;
+    }
+    let d = `M0,50 `;
+    for(let i = 0; i < BUCKETS; i++) d += `L${i},${(50 - peaks[i] * 48).toFixed(2)} `;
+    for(let i = BUCKETS - 1; i >= 0; i--) d += `L${i},${(50 + peaks[i] * 48).toFixed(2)} `;
+    d += 'Z';
+    wavePath.setAttribute('d', d);
+    waveProgressPath.setAttribute('d', d);
+  }
+
+  volSlider.addEventListener('input', () => {
+    audioEl.volume = parseFloat(volSlider.value); audioEl.muted = false; updateVolIcon(); saveVolumePref(audioEl.volume);
+  });
+  muteBtn.addEventListener('click', () => { audioEl.muted = !audioEl.muted; updateVolIcon(); });
+  function updateVolIcon(){ volIcon.innerHTML = (audioEl.muted || audioEl.volume === 0) ? SPEAKER_OFF_SVG : SPEAKER_ON_SVG; }
+  (async function initVolume(){
+    const saved = await loadVolumePref();
+    const v = (saved !== null && isFinite(saved)) ? saved : 0.8;
+    volSlider.value = v; audioEl.volume = v; updateVolIcon();
+  })();
+
+  // ---- download menu: export notes as .txt or .md ----
+  const downloadBtn = document.getElementById('downloadBtn');
+  const downloadMenu = document.getElementById('downloadMenu');
+
+  function openDownloadMenu(){
+    downloadMenu.hidden = false;
+    downloadBtn.setAttribute('aria-expanded', 'true');
+    document.addEventListener('click', onDocClickCloseDownloadMenu, true);
+    document.addEventListener('keydown', onDownloadMenuKeydown, true);
+  }
+  function closeDownloadMenu(){
+    downloadMenu.hidden = true;
+    downloadBtn.setAttribute('aria-expanded', 'false');
+    document.removeEventListener('click', onDocClickCloseDownloadMenu, true);
+    document.removeEventListener('keydown', onDownloadMenuKeydown, true);
+  }
+  function onDocClickCloseDownloadMenu(e){
+    if(!e.target.closest('.dl-menu-wrap')) closeDownloadMenu();
+  }
+  function onDownloadMenuKeydown(e){
+    if(e.key === 'Escape') closeDownloadMenu();
+  }
+  downloadBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if(downloadMenu.hidden) openDownloadMenu(); else closeDownloadMenu();
+  });
+
+  function sourceLabel(){ return (fileNameEl.textContent || '').trim() || 'Session Notes'; }
+  function slugFilename(name){
+    return (name.toLowerCase().replace(/\.[a-z0-9]+$/i, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')) || 'session-notes';
+  }
+  function notesToTxt(){
+    return notes.map(n => `${fmtTime(n.time, false)} - ${n.text || ''}`).join('\n');
+  }
+  function notesToMd(){
+    const lines = [`# ${sourceLabel()}`, ''];
+    notes.forEach(n => lines.push(`- **${fmtTime(n.time, false)}** — ${n.text || ''}`));
+    return lines.join('\n');
+  }
+  function triggerDownload(content, filename, mime){
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+  document.querySelectorAll('.dl-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const base = slugFilename(sourceLabel());
+      if(btn.dataset.format === 'txt'){
+        triggerDownload(notesToTxt(), `${base}.txt`, 'text/plain;charset=utf-8');
+      }else{
+        triggerDownload(notesToMd(), `${base}.md`, 'text/markdown;charset=utf-8');
+      }
+      closeDownloadMenu();
+    });
+  });
+
+  function timeFromClientX(clientX){
+    const rect = timelineWrap.getBoundingClientRect();
+    const x = Math.min(Math.max(clientX - rect.left, 0), rect.width);
+    const d = getDuration();
+    return d > 0 ? (x / rect.width) * d : 0;
+  }
+  timelineWrap.addEventListener('pointerdown', e => {
+    if(e.target.closest('.note-marker') || !mode) return;
+    doSeek(timeFromClientX(e.clientX));
+  });
+
+  newNoteBtn.addEventListener('click', () => {
+    const note = { id: makeId(), time: getCurrentTime(), text: '' };
+    notes.push(note); notes.sort((a, b) => a.time - b.time);
+    renderNotes(note.id); renderMarkers(note.id); scheduleSave();
+    const ta = notesListEl.querySelector(`[data-id="${note.id}"] .note-text`);
+    if(ta) ta.focus();
+  });
+
+  function setLiveMode(on){
+    liveMode = on;
+    liveToggle.classList.toggle('active', on);
+    liveToggle.setAttribute('aria-pressed', String(on));
+    newNoteBtn.hidden = on; liveCompose.hidden = !on;
+    liveNote = null;
+    if(on){ liveCompose.value = ''; liveCompose.focus(); }
+  }
+  liveToggle.addEventListener('click', () => setLiveMode(!liveMode));
+  liveCompose.addEventListener('input', () => {
+    const val = liveCompose.value;
+    if(!liveNote){
+      if(!val.length) return;
+      liveNote = { id: makeId(), time: getCurrentTime(), text: val };
+      notes.push(liveNote); notes.sort((a, b) => a.time - b.time);
+      renderNotes(liveNote.id); renderMarkers(liveNote.id); scheduleSave();
+    }else{
+      liveNote.text = val;
+      const ta = notesListEl.querySelector(`[data-id="${liveNote.id}"] .note-text`);
+      if(ta && document.activeElement !== ta) ta.value = val;
+      scheduleSave();
+    }
+  });
+  liveCompose.addEventListener('keydown', e => {
+    if(e.key === 'Enter'){ e.preventDefault(); liveNote = null; liveCompose.value = ''; }
+  });
+  liveCompose.addEventListener('blur', () => { liveNote = null; });
+
+  function renderNotes(popId){
+    notesListEl.querySelectorAll('.note-item').forEach(el => el.remove());
+    notesEmptyEl.hidden = notes.length > 0;
+    notes.forEach(note => {
+      const row = document.createElement('div');
+      row.className = 'note-item' + (note.id === popId ? ' pop' : '');
+      row.dataset.id = note.id;
+      row.innerHTML = `
+        <div class="note-controls">
+          <button class="note-diamond" aria-label="Jump to this time"></button>
+          <input class="note-time" type="text" value="${fmtTime(note.time, true)}" aria-label="time">
+        </div>
+        <div class="note-body"><textarea class="note-text" rows="2" placeholder="…">${escapeHtml(note.text)}</textarea></div>
+        <button class="note-delete" aria-label="Delete">&times;</button>`;
+      notesListEl.appendChild(row);
+
+      row.querySelector('.note-diamond').addEventListener('click', () => { doSeek(note.time); pulseMarker(note.id); });
+      const timeInput = row.querySelector('.note-time');
+      timeInput.addEventListener('change', () => {
+        const parsed = parseTime(timeInput.value); const d = getDuration() || Infinity;
+        note.time = isFinite(parsed) ? Math.min(Math.max(parsed, 0), d) : note.time;
+        timeInput.value = fmtTime(note.time, true);
+        notes.sort((a, b) => a.time - b.time);
+        renderNotes(); renderMarkers(); scheduleSave();
+      });
+      const textArea = row.querySelector('.note-text');
+      textArea.addEventListener('input', () => { note.text = textArea.value; scheduleSave(); });
+      textArea.addEventListener('focus', () => setMarkerActive(note.id, true));
+      textArea.addEventListener('blur', () => setMarkerActive(note.id, false));
+      row.addEventListener('mouseenter', () => setMarkerLinked(note.id, true));
+      row.addEventListener('mouseleave', () => setMarkerLinked(note.id, false));
+      row.querySelector('.note-delete').addEventListener('click', () => {
+        notes = notes.filter(n => n.id !== note.id);
+        if(liveNote && liveNote.id === note.id) liveNote = null;
+        renderNotes(); renderMarkers(); scheduleSave();
+      });
+    });
+  }
+
+  function renderMarkers(popId){
+    markerRail.innerHTML = '';
+    const d = getDuration();
+    if(d <= 0) return;
+    notes.forEach(note => {
+      const m = document.createElement('div');
+      m.className = 'note-marker' + (note.id === popId ? ' pop' : '');
+      m.style.left = Math.min(100, (note.time / d) * 100) + '%';
+      m.dataset.id = note.id;
+      m.title = fmtTime(note.time, true);
+      m.addEventListener('pointerdown', onMarkerPointerDown);
+      m.addEventListener('mouseenter', () => setRowLinked(note.id, true));
+      m.addEventListener('mouseleave', () => setRowLinked(note.id, false));
+      markerRail.appendChild(m);
+    });
+  }
+  function setRowLinked(id, on){ const row = notesListEl.querySelector(`[data-id="${id}"]`); if(row) row.classList.toggle('is-linked', on); }
+  function setMarkerLinked(id, on){ const m = markerRail.querySelector(`[data-id="${id}"]`); if(m) m.classList.toggle('is-linked', on); }
+  function setMarkerActive(id, on){ const m = markerRail.querySelector(`[data-id="${id}"]`); if(m) m.classList.toggle('is-active', on); }
+  function pulseMarker(id){ const m = markerRail.querySelector(`[data-id="${id}"]`); if(!m) return; m.classList.remove('pop'); void m.offsetWidth; m.classList.add('pop'); }
+  function focusRow(id){
+    const row = notesListEl.querySelector(`[data-id="${id}"]`);
+    if(!row) return;
+    row.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    row.classList.remove('pop'); void row.offsetWidth; row.classList.add('pop');
+    const ta = row.querySelector('.note-text'); if(ta) ta.focus();
+  }
+
+  function onMarkerPointerDown(e){
+    e.preventDefault(); e.stopPropagation();
+    dragNoteId = e.currentTarget.dataset.id; dragMoved = false;
+    e.currentTarget.classList.add('dragging');
+    setRowLinked(dragNoteId, true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    e.currentTarget.addEventListener('pointermove', onMarkerPointerMove);
+    e.currentTarget.addEventListener('pointerup', onMarkerPointerUp);
+  }
+  function onMarkerPointerMove(e){
+    const note = notes.find(n => n.id === dragNoteId);
+    if(!note) return;
+    dragMoved = true;
+    const t = timeFromClientX(e.clientX);
+    note.time = t;
+    const d = getDuration();
+    e.currentTarget.style.left = Math.min(100, d > 0 ? (t / d) * 100 : 0) + '%';
+    const timeInput = notesListEl.querySelector(`[data-id="${note.id}"] .note-time`);
+    if(timeInput) timeInput.value = fmtTime(note.time, true);
+  }
+  function onMarkerPointerUp(e){
+    e.currentTarget.classList.remove('dragging');
+    e.currentTarget.removeEventListener('pointermove', onMarkerPointerMove);
+    e.currentTarget.removeEventListener('pointerup', onMarkerPointerUp);
+    const note = notes.find(n => n.id === dragNoteId);
+    if(note){
+      if(!dragMoved){ doSeek(note.time); focusRow(note.id); }
+      else{ notes.sort((a, b) => a.time - b.time); renderNotes(); renderMarkers(); scheduleSave(); }
+    }
+    setRowLinked(dragNoteId, false);
+    dragNoteId = null;
+  }
+
+  window.addEventListener('beforeunload', () => { if(objectUrl) URL.revokeObjectURL(objectUrl); });
+})();
+</script>
+
+</body>
+</html>
