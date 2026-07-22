@@ -63,7 +63,7 @@
     font-weight:300;
     letter-spacing:0.14em;
     color:var(--text-faint);
-	text-transform:uppercase;
+	text-transform:lowercase;
   }
   .site-wordmark{
     display:flex;
@@ -77,6 +77,28 @@
     height:55px;
     width:auto;
   }
+  .site-nav{
+    display:flex;
+    gap:20px;
+    justify-content:center;
+    width:100%;
+    max-width:680px;
+    margin:0 0 18px;
+  }
+  .site-nav a{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10.5px;
+    font-weight:500;
+    letter-spacing:0.14em;
+    text-transform:lowercase;
+    text-decoration:none;
+    color:var(--text-faint);
+    padding-bottom:4px;
+    border-bottom:1px solid transparent;
+    transition: color 120ms ease, border-color 120ms ease;
+  }
+  .site-nav a:hover{ color:var(--text-muted); }
+  .site-nav a.active{ color:var(--sr); border-color:var(--sr-glow); }
   .header-icons{
     position:absolute;
     top:0;
@@ -110,7 +132,7 @@
     font-size:10.5px;
     letter-spacing:0.14em;
     color:var(--text-faint);
-    text-transform:uppercase;
+    text-transform:lowercase;
     margin-bottom:10px;
   }
 
@@ -156,7 +178,7 @@
     padding:0 20px;
     cursor:pointer;
     transition: border-color 120ms ease, color 120ms ease;
-    text-transform:uppercase;
+    text-transform:lowercase;
   }
   .tap-btn:hover{ border-color:var(--active-border); color:var(--text); }
   .tap-btn.flash{ border-color:var(--led); color:var(--led); }
@@ -236,7 +258,7 @@
     font-size:10px;
     letter-spacing:0.13em;
     color:var(--text-faint);
-    text-transform:uppercase;
+    text-transform:lowercase;
     margin-bottom:6px;
   }
   .readout.is-sr .label{ color:var(--sr); }
@@ -396,7 +418,7 @@
     font-size:10px;
     font-weight:600;
     letter-spacing:0.08em;
-    text-transform:uppercase;
+    text-transform:lowercase;
     color:var(--led);
     margin-bottom:7px;
   }
@@ -439,7 +461,7 @@
     font-size:10.5px;
     font-weight:600;
     letter-spacing:0.05em;
-    text-transform:uppercase;
+    text-transform:lowercase;
     padding:7px 13px;
     border-radius:8px;
     border:1px solid var(--border);
@@ -578,7 +600,7 @@
     font-family:'IBM Plex Mono', monospace;
     font-size:10.5px;
     letter-spacing:0.14em;
-    text-transform:uppercase;
+    text-transform:lowercase;
     color:var(--text-faint);
     transition: color 120ms ease;
   }
@@ -737,6 +759,11 @@
     </g>
 </svg>
 </span>
+
+<nav class="site-nav">
+  <a href="musical-calculator.html" class="active">Calculator</a>
+  <a href="audio-notes.html">Audio Notes</a>
+</nav>
 
 <div class="unit">
   <header>
