@@ -162,6 +162,7 @@
   .note-marker:hover, .note-marker.is-linked{ transform:translate(-50%,-50%) rotate(45deg) scale(1.35); box-shadow:0 0 10px var(--led-glow); }
   .note-marker.is-active{ transform:translate(-50%,-50%) rotate(45deg) scale(1.5); box-shadow:0 0 14px var(--led-glow); }
   .note-marker.dragging{ cursor:grabbing; transform:translate(-50%,-50%) rotate(45deg) scale(1.5); box-shadow:0 0 14px var(--led-glow); }
+  .note-marker.lit{ background:var(--led); box-shadow:0 0 12px 2px var(--led-glow); transform:translate(-50%,-50%) rotate(45deg) scale(1.4); }
   @keyframes pop-glow{ 0%{ opacity:0; filter:brightness(2.6); } 100%{ opacity:1; filter:brightness(1); } }
   .note-marker.pop{ animation:pop-glow 260ms ease-out; }
   .playhead{ position:absolute; top:0; bottom:0; width:2px; background:var(--led); box-shadow:0 0 6px var(--led-glow); pointer-events:none; left:0; }
@@ -200,6 +201,7 @@
     border-radius:8px; padding:10px 12px; transition: border-color 150ms ease, background 150ms ease;
   }
   .note-item.is-linked{ border-left-color:var(--led); background:#211d15; }
+  .note-item.lit{ border-left-color:var(--led); background:#241d10; box-shadow:0 0 0 1px var(--led-glow) inset; }
   @keyframes flash-glow{ 0%{ border-left-color:var(--led); background:#2c2410; box-shadow:0 0 0 1px var(--led-glow) inset; } 100%{ border-left-color:var(--border); background:var(--panel-2); box-shadow:none; } }
   .note-item.flash{ animation:flash-glow 900ms ease-out; }
   @keyframes pop-in{ from{ transform:scale(0.92); opacity:0; } to{ transform:scale(1); opacity:1; } }
@@ -276,8 +278,8 @@
 </span>
 
 <nav class="site-nav">
-  <a href="/" >Calculator</a>
-  <a href="/session-notes/" class="active">Session Notes</a>
+  <a href="musical-calculator.html">Calculator</a>
+  <a href="session-notes.html" class="active">Session Notes</a>
 </nav>
 
 <div class="unit">
@@ -425,6 +427,7 @@
   let dragNoteId = null, dragMoved = false;
   let manualElapsed = 0, manualRunning = false, manualLastTs = 0;
   let lastCheckTime = 0;
+  let activeLitId = null;
   let liveMode = false, liveNote = null;
 
   function slugify(name){ return 'session-notes:' + name.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 150); }
@@ -487,6 +490,7 @@
     const d = getDuration();
     t = Math.min(Math.max(t, 0), d || 0);
     lastCheckTime = t;
+    updateLitForPosition(t);
     if(mode === 'manual'){ manualElapsed = t; updateTimeUI(); }
     else if(mode === 'audio'){ audioEl.currentTime = t; updateTimeUI(); }
   }
@@ -529,8 +533,28 @@
   }
   function triggerPlaybackHit(id){
     pulseMarker(id);
-    const row = notesListEl.querySelector(`[data-id="${id}"]`);
-    if(row){ row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); }
+    setLitNote(id);
+  }
+  function setLitNote(id){
+    if(activeLitId === id) return;
+    if(activeLitId != null){
+      const prevM = markerRail.querySelector(`[data-id="${activeLitId}"]`);
+      if(prevM) prevM.classList.remove('lit');
+      const prevRow = notesListEl.querySelector(`[data-id="${activeLitId}"]`);
+      if(prevRow) prevRow.classList.remove('lit');
+    }
+    activeLitId = id;
+    if(id != null){
+      const m = markerRail.querySelector(`[data-id="${id}"]`);
+      if(m) m.classList.add('lit');
+      const row = notesListEl.querySelector(`[data-id="${id}"]`);
+      if(row) row.classList.add('lit');
+    }
+  }
+  function updateLitForPosition(t){
+    let candidate = null;
+    for(const note of notes){ if(note.time <= t) candidate = note.id; else break; }
+    setLitNote(candidate);
   }
   audioEl.addEventListener('play', () => onPlayStateChange(true));
   audioEl.addEventListener('pause', () => onPlayStateChange(false));
@@ -552,7 +576,7 @@
     if(objectUrl){ URL.revokeObjectURL(objectUrl); objectUrl = null; }
     audioEl.removeAttribute('src'); audioEl.load();
     stopRaf();
-    mode = null; duration = 0; manualElapsed = 0; manualRunning = false; lastCheckTime = 0;
+    mode = null; duration = 0; manualElapsed = 0; manualRunning = false; lastCheckTime = 0; activeLitId = null;
     currentFileKey = null; notes = []; liveNote = null;
     setLiveMode(false);
     liveToggle.disabled = true;
@@ -784,7 +808,7 @@
     notesEmptyEl.hidden = notes.length > 0;
     notes.forEach(note => {
       const row = document.createElement('div');
-      row.className = 'note-item' + (note.id === popId ? ' pop' : '');
+      row.className = 'note-item' + (note.id === popId ? ' pop' : '') + (note.id === activeLitId ? ' lit' : '');
       row.dataset.id = note.id;
       row.innerHTML = `
         <div class="note-controls">
@@ -824,7 +848,7 @@
     if(d <= 0) return;
     notes.forEach(note => {
       const m = document.createElement('div');
-      m.className = 'note-marker' + (note.id === popId ? ' pop' : '');
+      m.className = 'note-marker' + (note.id === popId ? ' pop' : '') + (note.id === activeLitId ? ' lit' : '');
       m.style.left = Math.min(100, (note.time / d) * 100) + '%';
       m.dataset.id = note.id;
       m.title = fmtTime(note.time, true);
