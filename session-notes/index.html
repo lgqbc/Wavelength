@@ -29,7 +29,7 @@
     border:1px solid var(--border); border-radius:12px; padding:20px 24px 22px;
   }
   header{ position:relative; padding-bottom:14px; margin-bottom:18px; border-bottom:1px solid var(--border-lo); }
-  .header-icons{ position:absolute; top:0; right:10px; display:flex; gap:7px; }
+  .header-icons{ position:absolute; top:0; right:10px; display:flex; gap:7px; scale:130%; }
   .icon-btn{
     width:22px; height:22px; display:flex; align-items:center; justify-content:center;
     background:none; border:1px solid var(--active-border); border-radius:50%;
@@ -37,6 +37,39 @@
     transition: border-color 120ms ease, color 120ms ease;
   }
   .icon-btn:hover{ border-color:var(--active-border); color:var(--text); }
+  .info-overlay{
+    position:fixed; inset:0; z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(0,0,0,0.55);
+    padding:16px;
+  }
+  .info-overlay[hidden]{ display:none; }
+  .info-card{
+    width:min(380px, 100%);
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:18px 20px;
+    box-shadow:0 14px 34px rgba(0,0,0,0.55);
+  }
+  .info-eyebrow{
+    display:flex; align-items:center; justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace; font-size:10px; font-weight:600;
+    letter-spacing:0.08em; text-transform:lowercase; color:var(--led);
+    margin-bottom:9px;
+  }
+  .info-skip{ background:none; border:none; color:var(--text-muted); font-size:16px; line-height:1; padding:2px 4px; cursor:pointer; }
+  .info-skip:hover{ color:#ddd; }
+  .info-title{ font-family:'IBM Plex Sans', sans-serif; font-size:14px; font-weight:600; color:#eaeaea; margin-bottom:9px; }
+  .info-list{ margin:0 0 15px; padding-left:18px; display:flex; flex-direction:column; gap:7px; }
+  .info-list li{ font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; line-height:1.5; color:var(--text-muted); }
+  .info-footer{ display:flex; justify-content:flex-end; }
+  .info-btn-primary{
+    font-family:'IBM Plex Mono', monospace; font-size:10.5px; font-weight:600;
+    letter-spacing:0.05em; text-transform:lowercase; padding:7px 13px; border-radius:8px;
+    border:1px solid var(--led); background:var(--led); color:#171310; cursor:pointer;
+  }
+  .info-btn-primary:hover{ filter:brightness(1.08); }
   .dl-menu-wrap{ position:relative; }
   .dl-menu{
     position:absolute; top:calc(100% + 8px); right:0; z-index:30;
@@ -121,6 +154,21 @@
     padding:6px 10px; cursor:pointer; transition: border-color 120ms ease, color 120ms ease; white-space:nowrap;
   }
   .change-file-btn:hover{ border-color:var(--active-border); color:var(--text); }
+
+  .rec-live{ display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+  .rec-live[hidden]{ display:none; }
+  .rec-dot{
+    width:8px; height:8px; border-radius:50%; background:var(--danger); flex:0 0 auto;
+    animation: rec-pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes rec-pulse{
+    0%{ box-shadow:0 0 0 0 rgba(255,122,104,0.55); }
+    70%{ box-shadow:0 0 0 7px rgba(255,122,104,0); }
+    100%{ box-shadow:0 0 0 0 rgba(255,122,104,0); }
+  }
+  .rec-elapsed{ font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:600; color:var(--text); white-space:nowrap; }
+  .rec-stop-btn{ color:var(--danger); border-color:var(--danger); }
+  .rec-stop-btn:hover{ color:#ff9686; border-color:#ff9686; }
 
   .transport{ display:flex; align-items:center; gap:12px; margin-top:14px; }
   .play-btn{
@@ -285,9 +333,16 @@
 <div class="unit">
   <header>
     <div class="header-icons">
+      <button class="icon-btn" id="infoBtn" aria-label="About Session Notes" title="About Session Notes">
+        <svg viewBox="0 0 16 16" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="8" r="6.2"/>
+          <line x1="8" y1="7.2" x2="8" y2="11.3"/>
+          <circle cx="8" cy="4.9" r="0.8" fill="currentColor" stroke-width="0"/>
+        </svg>
+      </button>
       <div class="dl-menu-wrap">
         <button class="icon-btn" id="downloadBtn" aria-label="Download notes" title="Download notes" aria-haspopup="true" aria-expanded="false">
-          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+          <svg viewBox="0 0 16 16" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 2.2v7.6"/>
             <path d="M4.6 6.4 8 9.8l3.4-3.4"/>
             <path d="M3 12.6h10"/>
@@ -302,6 +357,26 @@
     <div class="brand">Session Notes</div>
   </header>
 
+  <div class="info-overlay" id="infoOverlay" hidden>
+    <div class="info-card">
+      <div class="info-eyebrow">
+        <span>About Session Notes</span>
+        <button class="info-skip" id="infoClose" aria-label="Close">&times;</button>
+      </div>
+      <div class="info-title">Note taking for audio purposes</div>
+      <ul class="info-list">
+        <li>Whether you're working on a track and want to brainstorm, or want to take notes while studying references, this tool makes it convenient.</li>
+        <li>Choose an audio file from your PC, use file-less mode for an external audio source, or record straight from your mic.</li>
+        <li>Creating a new note places it at that spot in the timeline.</li>
+        <li>In live mode, a new note is created as soon as you begin typing. Hit enter when done, and the tool is ready for you to start typing again.</li>
+        <li>Export your notes with timestamps as .txt or .md text files.</li>
+      </ul>
+      <div class="info-footer">
+        <button class="info-btn-primary" id="infoGotIt">Got it</button>
+      </div>
+    </div>
+  </div>
+
   <section>
     <input type="file" id="fileInput" accept="audio/*" hidden>
     <div class="source-row" id="sourceRow">
@@ -315,11 +390,21 @@
         <input type="text" id="manualLength" class="len-input" placeholder="0:00">
         <button class="start-btn" id="manualStartBtn">Start</button>
       </div>
+      <div class="source-or">or</div>
+      <div class="dropzone" id="recordStartBtn">
+        <div class="dz-title">Record from mic</div>
+        <div class="dz-sub">Stays on your device, nothing is uploaded.</div>
+      </div>
     </div>
     <div class="file-info" id="fileInfo" hidden>
       <div class="file-info-main">
         <div class="file-info-name" id="fileName"></div>
         <div class="file-info-sub" id="fileSub"></div>
+      </div>
+      <div class="rec-live" id="recLive" hidden>
+        <span class="rec-dot"></span>
+        <span class="rec-elapsed" id="recElapsed">0:00</span>
+        <button class="change-file-btn rec-stop-btn" id="recStopBtn">Stop</button>
       </div>
       <button class="change-file-btn" id="changeFileBtn">Change</button>
     </div>
@@ -386,6 +471,10 @@
   const fileNameEl = document.getElementById('fileName');
   const fileSubEl = document.getElementById('fileSub');
   const changeFileBtn = document.getElementById('changeFileBtn');
+  const recordStartBtn = document.getElementById('recordStartBtn');
+  const recLive = document.getElementById('recLive');
+  const recElapsedEl = document.getElementById('recElapsed');
+  const recStopBtn = document.getElementById('recStopBtn');
 
   const audioEl = document.getElementById('audioEl');
   const playBtn = document.getElementById('playBtn');
@@ -430,6 +519,38 @@
   let activeLitId = null;
   let liveMode = false, liveNote = null;
 
+  let mediaStream = null, mediaRecorder = null, recChunks = [], recMimeType = '';
+  let recAudioCtx = null, recAnalyser = null;
+  let recStartTs = 0, recRafId = null, recPeaks = [];
+
+  function encodeWAV(audioBuffer){
+    const numCh = audioBuffer.numberOfChannels;
+    const sampleRate = audioBuffer.sampleRate;
+    const numFrames = audioBuffer.length;
+    const bytesPerSample = 2;
+    const blockAlign = numCh * bytesPerSample;
+    const dataSize = numFrames * blockAlign;
+    const buf = new ArrayBuffer(44 + dataSize);
+    const view = new DataView(buf);
+    const writeStr = (off, str) => { for(let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i)); };
+    writeStr(0, 'RIFF'); view.setUint32(4, 36 + dataSize, true); writeStr(8, 'WAVE');
+    writeStr(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true);
+    view.setUint16(22, numCh, true); view.setUint32(24, sampleRate, true);
+    view.setUint32(28, sampleRate * blockAlign, true); view.setUint16(32, blockAlign, true);
+    view.setUint16(34, 16, true);
+    writeStr(36, 'data'); view.setUint32(40, dataSize, true);
+    const channels = []; for(let c = 0; c < numCh; c++) channels.push(audioBuffer.getChannelData(c));
+    let offset = 44;
+    for(let i = 0; i < numFrames; i++){
+      for(let c = 0; c < numCh; c++){
+        let s = Math.max(-1, Math.min(1, channels[c][i]));
+        s = s < 0 ? s * 0x8000 : s * 0x7fff;
+        view.setInt16(offset, s, true); offset += 2;
+      }
+    }
+    return new Blob([buf], { type: 'audio/wav' });
+  }
+
   function slugify(name){ return 'session-notes:' + name.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 150); }
   let saveTimer = null;
   function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNotes, 300); }
@@ -471,8 +592,8 @@
   function escapeHtml(str){ const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
   function makeId(){ return 'n' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
 
-  function isPaused(){ return mode === 'manual' ? !manualRunning : (mode === 'audio' ? audioEl.paused : true); }
-  function getCurrentTime(){ return mode === 'manual' ? manualElapsed : (audioEl.currentTime || 0); }
+  function isPaused(){ return mode === 'manual' ? !manualRunning : (mode === 'record' ? false : (mode === 'audio' ? audioEl.paused : true)); }
+  function getCurrentTime(){ return mode === 'manual' ? manualElapsed : (mode === 'record' ? duration : (audioEl.currentTime || 0)); }
   function getDuration(){ return duration; }
   function doPlay(){
     lastCheckTime = getCurrentTime();
@@ -576,6 +697,7 @@
     if(objectUrl){ URL.revokeObjectURL(objectUrl); objectUrl = null; }
     audioEl.removeAttribute('src'); audioEl.load();
     stopRaf();
+    stopRecordingResources();
     mode = null; duration = 0; manualElapsed = 0; manualRunning = false; lastCheckTime = 0; activeLitId = null;
     currentFileKey = null; notes = []; liveNote = null;
     setLiveMode(false);
@@ -592,7 +714,20 @@
     markerRail.innerHTML = '';
     renderNotes();
     sourceRow.hidden = false; fileInfo.hidden = true;
+    recLive.hidden = true; changeFileBtn.hidden = false;
     manualLength.value = ''; manualLabel.value = '';
+  }
+
+  function stopRecordingResources(){
+    if(recRafId){ cancelAnimationFrame(recRafId); recRafId = null; }
+    if(mediaRecorder && mediaRecorder.state !== 'inactive'){
+      mediaRecorder.ondataavailable = null; mediaRecorder.onstop = null;
+      try{ mediaRecorder.stop(); }catch(e){}
+    }
+    mediaRecorder = null;
+    if(mediaStream){ mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+    if(recAudioCtx){ try{ recAudioCtx.close(); }catch(e){} recAudioCtx = null; }
+    recAnalyser = null; recChunks = []; recPeaks = [];
   }
 
   async function loadFile(file){
@@ -663,6 +798,154 @@
     loadNotesFor(currentFileKey).then(n => { notes = n; renderNotes(); renderMarkers(); });
   }
 
+  function pickRecordMimeType(){
+    const candidates = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'];
+    for(const c of candidates){
+      if(window.MediaRecorder && MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) return c;
+    }
+    return '';
+  }
+
+  recordStartBtn.addEventListener('click', startRecording);
+  recStopBtn.addEventListener('click', stopRecording);
+
+  async function startRecording(){
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !window.MediaRecorder){
+      recordStartBtn.classList.add('drag-over');
+      setTimeout(() => recordStartBtn.classList.remove('drag-over'), 900);
+      return;
+    }
+    let stream;
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    }catch(err){ return; }
+
+    resetSource();
+    mediaStream = stream;
+    recChunks = [];
+    recMimeType = pickRecordMimeType();
+    try{ mediaRecorder = recMimeType ? new MediaRecorder(stream, { mimeType: recMimeType }) : new MediaRecorder(stream); }
+    catch(err){ mediaRecorder = new MediaRecorder(stream); }
+    mediaRecorder.ondataavailable = e => { if(e.data && e.data.size) recChunks.push(e.data); };
+    mediaRecorder.onstop = onRecordingStopped;
+    mediaRecorder.start(1000);
+
+    const AC = window.AudioContext || window.webkitAudioContext;
+    recAudioCtx = new AC();
+    const src = recAudioCtx.createMediaStreamSource(stream);
+    recAnalyser = recAudioCtx.createAnalyser();
+    recAnalyser.fftSize = 1024;
+    src.connect(recAnalyser);
+
+    mode = 'record'; duration = 0; recPeaks = [];
+    recStartTs = performance.now();
+    currentFileKey = slugify('recording:' + Date.now());
+    notes = []; liveNote = null; activeLitId = null;
+    renderNotes(); markerRail.innerHTML = '';
+
+    fileNameEl.textContent = 'Recording…';
+    fileSubEl.textContent = 'Listening for input';
+    sourceRow.hidden = true; fileInfo.hidden = false; volWrap.hidden = true;
+    recLive.hidden = false; changeFileBtn.hidden = true;
+
+    wavePath.setAttribute('d', ''); waveProgressPath.setAttribute('d', '');
+    waveEmptyMsg.textContent = '';
+    timelineWrap.classList.remove('is-empty');
+    newNoteBtn.disabled = false; liveToggle.disabled = false; playBtn.disabled = true;
+
+    startRecordRaf();
+  }
+
+  function startRecordRaf(){
+    const timeData = new Float32Array(recAnalyser.fftSize);
+    let frame = 0;
+    const step = () => {
+      if(mode !== 'record') return;
+      duration = (performance.now() - recStartTs) / 1000;
+      recElapsedEl.textContent = fmtTime(duration, false);
+      durTimeEl.textContent = fmtTime(duration, false);
+      curTimeEl.textContent = fmtTime(duration, false);
+      playhead.style.left = '100%';
+      waveProgressBg.style.width = '100%';
+
+      recAnalyser.getFloatTimeDomainData(timeData);
+      let peak = 0;
+      for(let i = 0; i < timeData.length; i++){ const a = Math.abs(timeData[i]); if(a > peak) peak = a; }
+      recPeaks.push(peak);
+
+      frame++;
+      if(frame % 4 === 0){ drawLiveWaveform(); renderMarkers(); }
+
+      recRafId = requestAnimationFrame(step);
+    };
+    recRafId = requestAnimationFrame(step);
+  }
+
+  function drawLiveWaveform(){
+    const n = recPeaks.length;
+    if(n === 0) return;
+    let d = 'M0,50 ';
+    const top = new Array(BUCKETS);
+    for(let i = 0; i < BUCKETS; i++) top[i] = recPeaks[Math.min(n - 1, Math.floor((i / BUCKETS) * n))];
+    for(let i = 0; i < BUCKETS; i++) d += `L${i},${(50 - top[i] * 48).toFixed(2)} `;
+    for(let i = BUCKETS - 1; i >= 0; i--) d += `L${i},${(50 + top[i] * 48).toFixed(2)} `;
+    d += 'Z';
+    wavePath.setAttribute('d', d);
+    waveProgressPath.setAttribute('d', d);
+  }
+
+  function stopRecording(){
+    if(!mediaRecorder || mediaRecorder.state === 'inactive') return;
+    recStopBtn.disabled = true;
+    if(recRafId){ cancelAnimationFrame(recRafId); recRafId = null; }
+    mediaRecorder.stop();
+  }
+
+  async function onRecordingStopped(){
+    const finalDuration = duration;
+    if(mediaStream){ mediaStream.getTracks().forEach(t => t.stop()); mediaStream = null; }
+    if(recAudioCtx){ try{ recAudioCtx.close(); }catch(e){} recAudioCtx = null; }
+    recAnalyser = null;
+
+    const blob = new Blob(recChunks, { type: recMimeType || 'audio/webm' });
+    recChunks = [];
+    mode = 'audio-pending';
+    fileSubEl.textContent = 'Decoding…';
+    recStopBtn.disabled = false;
+
+    try{
+      const arrayBuf = await blob.arrayBuffer();
+      const AC = window.AudioContext || window.webkitAudioContext;
+      const ctx = new AC();
+      const audioBuffer = await ctx.decodeAudioData(arrayBuf.slice(0));
+      ctx.close();
+      duration = audioBuffer.duration;
+      drawWaveform(audioBuffer);
+      const wavBlob = encodeWAV(audioBuffer);
+      finalizeRecordedAudio(wavBlob, audioBuffer.numberOfChannels, audioBuffer.sampleRate);
+    }catch(err){
+      duration = finalDuration;
+      finalizeRecordedAudio(blob, null, null);
+    }
+  }
+
+  function finalizeRecordedAudio(blob, channels, sampleRate){
+    if(objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = URL.createObjectURL(blob);
+    audioEl.src = objectUrl;
+    mode = 'audio';
+    const label = 'Recording ' + new Date().toLocaleString();
+    fileNameEl.textContent = label;
+    fileSubEl.textContent = fmtTime(duration, false) + (channels ? ' · ' + (channels === 1 ? 'mono' : 'stereo') + ' · ' + sampleRate + 'Hz' : '');
+    durTimeEl.textContent = fmtTime(duration, false);
+    timelineWrap.classList.remove('is-empty');
+    recLive.hidden = true; changeFileBtn.hidden = false;
+    volWrap.hidden = false;
+    playBtn.disabled = false; newNoteBtn.disabled = false; liveToggle.disabled = false;
+    renderMarkers();
+    scheduleSave();
+  }
+
   function drawWaveform(buffer){
     const channels = [];
     for(let c = 0; c < buffer.numberOfChannels; c++) channels.push(buffer.getChannelData(c));
@@ -696,6 +979,28 @@
     const v = (saved !== null && isFinite(saved)) ? saved : 0.8;
     volSlider.value = v; audioEl.volume = v; updateVolIcon();
   })();
+
+  // ---- info popup: single "about" card ----
+  const infoBtn = document.getElementById('infoBtn');
+  const infoOverlay = document.getElementById('infoOverlay');
+  const infoClose = document.getElementById('infoClose');
+  const infoGotIt = document.getElementById('infoGotIt');
+
+  function openInfo(){
+    infoOverlay.hidden = false;
+    document.addEventListener('keydown', onInfoKeydown, true);
+  }
+  function closeInfo(){
+    infoOverlay.hidden = true;
+    document.removeEventListener('keydown', onInfoKeydown, true);
+  }
+  function onInfoKeydown(e){
+    if(e.key === 'Escape') closeInfo();
+  }
+  infoBtn.addEventListener('click', openInfo);
+  infoClose.addEventListener('click', closeInfo);
+  infoGotIt.addEventListener('click', closeInfo);
+  infoOverlay.addEventListener('click', (e) => { if(e.target === infoOverlay) closeInfo(); });
 
   // ---- download menu: export notes as .txt or .md ----
   const downloadBtn = document.getElementById('downloadBtn');
