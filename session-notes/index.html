@@ -341,6 +341,16 @@
         </svg>
       </button>
       <div class="dl-menu-wrap">
+        <button class="icon-btn" id="importBtn" aria-label="Import notes" title="Import notes (.txt or .md)" disabled>
+          <svg viewBox="0 0 16 16" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 11.3V3.7"/>
+            <path d="M4.6 6.6 8 3.2l3.4 3.4"/>
+            <path d="M3 12.6h10"/>
+          </svg>
+        </button>
+        <input type="file" id="importInput" accept=".txt,.md,text/plain,text/markdown" hidden>
+      </div>
+      <div class="dl-menu-wrap">
         <button class="icon-btn" id="downloadBtn" aria-label="Download notes" title="Download notes" aria-haspopup="true" aria-expanded="false">
           <svg viewBox="0 0 16 16" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
             <path d="M8 2.2v7.6"/>
@@ -351,6 +361,7 @@
         <div class="dl-menu" id="downloadMenu" hidden>
           <button class="dl-opt" data-format="txt">.txt <span class="dl-opt-sub">plain timestamps</span></button>
           <button class="dl-opt" data-format="md">.md <span class="dl-opt-sub">formatted list</span></button>
+          <button class="dl-opt" id="dlAudioOpt" data-format="audio" hidden>.wav <span class="dl-opt-sub">recorded audio</span></button>
         </div>
       </div>
     </div>
@@ -370,6 +381,7 @@
         <li>Creating a new note places it at that spot in the timeline.</li>
         <li>In live mode, a new note is created as soon as you begin typing. Hit enter when done, and the tool is ready for you to start typing again.</li>
         <li>Export your notes with timestamps as .txt or .md text files.</li>
+        <li>Import notes from a previously downloaded .txt or .md file. Timestamps beyond the current media's length land at the end of the timeline.</li>
       </ul>
       <div class="info-footer">
         <button class="info-btn-primary" id="infoGotIt">Got it</button>
@@ -519,6 +531,7 @@
   let activeLitId = null;
   let liveMode = false, liveNote = null;
 
+  let recordedBlob = null, recordedExt = 'wav';
   let mediaStream = null, mediaRecorder = null, recChunks = [], recMimeType = '';
   let recAudioCtx = null, recAnalyser = null;
   let recStartTs = 0, recRafId = null, recPeaks = [];
@@ -700,6 +713,7 @@
     stopRecordingResources();
     mode = null; duration = 0; manualElapsed = 0; manualRunning = false; lastCheckTime = 0; activeLitId = null;
     currentFileKey = null; notes = []; liveNote = null;
+    recordedBlob = null; updateAudioDownloadOption();
     setLiveMode(false);
     liveToggle.disabled = true;
     playIcon.innerHTML = PLAY_SVG;
@@ -709,7 +723,7 @@
     waveProgressBg.style.width = '0%';
     waveEmptyMsg.textContent = 'No audio loaded';
     timelineWrap.classList.add('is-empty');
-    newNoteBtn.disabled = true; playBtn.disabled = true;
+    newNoteBtn.disabled = true; importBtn.disabled = true; playBtn.disabled = true;
     volWrap.hidden = false;
     markerRail.innerHTML = '';
     renderNotes();
@@ -736,6 +750,7 @@
     objectUrl = URL.createObjectURL(file);
     audioEl.src = objectUrl;
     mode = 'audio';
+    recordedBlob = null; updateAudioDownloadOption();
     currentFileKey = slugify(file.name);
     fileNameEl.textContent = file.name;
     fileSubEl.textContent = 'Decoding waveform…';
@@ -747,7 +762,7 @@
 
     duration = 0; waveEmptyMsg.textContent = 'Decoding…'; wavePath.setAttribute('d', ''); waveProgressPath.setAttribute('d', '');
     timelineWrap.classList.add('is-empty');
-    newNoteBtn.disabled = true; playBtn.disabled = true; liveToggle.disabled = true;
+    newNoteBtn.disabled = true; importBtn.disabled = true; playBtn.disabled = true; liveToggle.disabled = true;
 
     try{
       const arrayBuf = await file.arrayBuffer();
@@ -761,7 +776,7 @@
       fileSubEl.textContent = fmtTime(duration, false) + ' · ' + (audioBuffer.numberOfChannels === 1 ? 'mono' : 'stereo') + ' · ' + audioBuffer.sampleRate + 'Hz';
       timelineWrap.classList.remove('is-empty');
       waveEmptyMsg.textContent = '';
-      newNoteBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
+      newNoteBtn.disabled = false; importBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
       renderMarkers();
     }catch(err){
       waveEmptyMsg.textContent = 'Could not decode this file';
@@ -770,7 +785,7 @@
         duration = audioEl.duration || 0;
         durTimeEl.textContent = fmtTime(duration, false);
         timelineWrap.classList.remove('is-empty');
-        newNoteBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
+        newNoteBtn.disabled = false; importBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
         renderMarkers();
         audioEl.removeEventListener('loadedmetadata', onMeta);
       });
@@ -794,7 +809,7 @@
     durTimeEl.textContent = fmtTime(len, false);
     timelineWrap.classList.remove('is-empty');
     waveEmptyMsg.textContent = '';
-    newNoteBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
+    newNoteBtn.disabled = false; importBtn.disabled = false; playBtn.disabled = false; liveToggle.disabled = false;
     loadNotesFor(currentFileKey).then(n => { notes = n; renderNotes(); renderMarkers(); });
   }
 
@@ -851,7 +866,7 @@
     wavePath.setAttribute('d', ''); waveProgressPath.setAttribute('d', '');
     waveEmptyMsg.textContent = '';
     timelineWrap.classList.remove('is-empty');
-    newNoteBtn.disabled = false; liveToggle.disabled = false; playBtn.disabled = true;
+    newNoteBtn.disabled = false; importBtn.disabled = false; liveToggle.disabled = false; playBtn.disabled = true;
 
     startRecordRaf();
   }
@@ -922,9 +937,11 @@
       duration = audioBuffer.duration;
       drawWaveform(audioBuffer);
       const wavBlob = encodeWAV(audioBuffer);
+      recordedBlob = wavBlob; recordedExt = 'wav';
       finalizeRecordedAudio(wavBlob, audioBuffer.numberOfChannels, audioBuffer.sampleRate);
     }catch(err){
       duration = finalDuration;
+      recordedBlob = blob; recordedExt = (recMimeType.split('/')[1] || 'webm').split(';')[0];
       finalizeRecordedAudio(blob, null, null);
     }
   }
@@ -941,10 +958,12 @@
     timelineWrap.classList.remove('is-empty');
     recLive.hidden = true; changeFileBtn.hidden = false;
     volWrap.hidden = false;
-    playBtn.disabled = false; newNoteBtn.disabled = false; liveToggle.disabled = false;
+    playBtn.disabled = false; newNoteBtn.disabled = false; importBtn.disabled = false; liveToggle.disabled = false;
     renderMarkers();
     scheduleSave();
+    updateAudioDownloadOption();
   }
+  function updateAudioDownloadOption(){ dlAudioOpt.hidden = !recordedBlob; }
 
   function drawWaveform(buffer){
     const channels = [];
@@ -1002,9 +1021,10 @@
   infoGotIt.addEventListener('click', closeInfo);
   infoOverlay.addEventListener('click', (e) => { if(e.target === infoOverlay) closeInfo(); });
 
-  // ---- download menu: export notes as .txt and .md ----
+  // ---- download menu: export notes as .txt or .md ----
   const downloadBtn = document.getElementById('downloadBtn');
   const downloadMenu = document.getElementById('downloadMenu');
+  const dlAudioOpt = document.getElementById('dlAudioOpt');
 
   function openDownloadMenu(){
     downloadMenu.hidden = false;
@@ -1054,12 +1074,61 @@
       const base = slugFilename(sourceLabel());
       if(btn.dataset.format === 'txt'){
         triggerDownload(notesToTxt(), `${base}.txt`, 'text/plain;charset=utf-8');
-      }else{
+      }else if(btn.dataset.format === 'md'){
         triggerDownload(notesToMd(), `${base}.md`, 'text/markdown;charset=utf-8');
+      }else if(btn.dataset.format === 'audio' && recordedBlob){
+        triggerDownload(recordedBlob, `${base}.${recordedExt}`, recordedBlob.type || 'audio/wav');
       }
       closeDownloadMenu();
     });
   });
+
+  // ---- import notes from a previously downloaded .txt or .md file ----
+  const importBtn = document.getElementById('importBtn');
+  const importInput = document.getElementById('importInput');
+  importBtn.addEventListener('click', () => importInput.click());
+  importInput.addEventListener('change', () => {
+    const f = importInput.files && importInput.files[0];
+    if(f) importNotesFile(f);
+    importInput.value = '';
+  });
+
+  function parseImportedNotes(text){
+    const lines = text.split(/\r?\n/);
+    const result = [];
+    for(const raw of lines){
+      const line = raw.trim();
+      if(!line || line.startsWith('#')) continue;
+      let timeStr, noteText;
+      const mdMatch = line.match(/^-\s*\*\*(.+?)\*\*\s*[—-]\s*(.*)$/);
+      if(mdMatch){
+        timeStr = mdMatch[1]; noteText = mdMatch[2];
+      }else{
+        const idx = line.indexOf(' - ');
+        if(idx === -1) continue;
+        timeStr = line.slice(0, idx).trim();
+        noteText = line.slice(idx + 3);
+      }
+      const t = parseTime(timeStr);
+      if(!isFinite(t)) continue;
+      result.push({ id: makeId(), time: Math.max(0, t), text: noteText });
+    }
+    return result;
+  }
+
+  function importNotesFile(file){
+    const reader = new FileReader();
+    reader.onload = () => {
+      const parsed = parseImportedNotes(String(reader.result || ''));
+      if(!parsed.length) return;
+      const d = getDuration();
+      if(d > 0) parsed.forEach(n => { if(n.time > d) n.time = d; });
+      notes = notes.concat(parsed);
+      notes.sort((a, b) => a.time - b.time);
+      renderNotes(); renderMarkers(); scheduleSave();
+    };
+    reader.readAsText(file);
+  }
 
   function timeFromClientX(clientX){
     const rect = timelineWrap.getBoundingClientRect();
