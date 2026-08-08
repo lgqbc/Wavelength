@@ -6,6 +6,11 @@
 <title>Session Notes — Wavelength</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
+<link rel="icon" href="/favicon.ico">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <style>
   :root{
     --bg: #131313; --panel: #191919; --panel-2: #212121;
@@ -564,6 +569,54 @@
   }
 
   function slugify(name){ return 'session-notes:' + name.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 150); }
+
+  // ---- persisted selected file: IndexedDB holds the actual bytes (localStorage/window.storage
+  // are text-only and far too small for audio). Recordings are intentionally NOT persisted here —
+  // only a file picked from disk or dropped in. Fails silently wherever IndexedDB is unavailable. ----
+  const IDB_NAME = 'session-notes-db';
+  const IDB_STORE = 'files';
+  const LAST_FILE_KEY = 'last-file';
+  function idbOpen(){
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(IDB_NAME, 1);
+      req.onupgradeneeded = () => { req.result.createObjectStore(IDB_STORE); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  async function idbSet(key, value){
+    try{
+      const db = await idbOpen();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(value, key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }catch(e){ return false; }
+  }
+  async function idbGet(key){
+    try{
+      const db = await idbOpen();
+      return await new Promise((resolve, reject) => {
+        const req = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(key);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }catch(e){ return null; }
+  }
+  async function idbDelete(key){
+    try{
+      const db = await idbOpen();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).delete(key);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }catch(e){ return false; }
+  }
+
   let saveTimer = null;
   function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveNotes, 300); }
   async function saveNotes(){
@@ -705,6 +758,7 @@
   [manualLabel, manualLength].forEach(inp => inp.addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); startManualSession(); } }));
 
   function resetSource(){
+    idbDelete(LAST_FILE_KEY);
     audioEl.pause();
     if(objectUrl){ URL.revokeObjectURL(objectUrl); objectUrl = null; }
     audioEl.removeAttribute('src'); audioEl.load();
@@ -743,7 +797,8 @@
     recAnalyser = null; recChunks = []; recPeaks = [];
   }
 
-  async function loadFile(file){
+  async function loadFile(file, opts){
+    opts = opts || {};
     audioEl.pause();
     if(objectUrl) URL.revokeObjectURL(objectUrl);
     objectUrl = URL.createObjectURL(file);
@@ -754,6 +809,7 @@
     fileNameEl.textContent = file.name;
     fileSubEl.textContent = 'Decoding waveform…';
     sourceRow.hidden = true; fileInfo.hidden = false; volWrap.hidden = false;
+    if(!opts.skipPersist) idbSet(LAST_FILE_KEY, file);
 
     playIcon.innerHTML = PLAY_SVG; curTimeEl.textContent = '0:00'; durTimeEl.textContent = '0:00'; playhead.style.left = '0%';
     notes = await loadNotesFor(currentFileKey);
@@ -1277,6 +1333,15 @@
   }
 
   window.addEventListener('beforeunload', () => { if(objectUrl) URL.revokeObjectURL(objectUrl); });
+
+  // ---- restore last selected file (and its notes) on page load ----
+  (async function init(){
+    if(navigator.storage && navigator.storage.persist){ try{ await navigator.storage.persist(); }catch(e){} }
+    try{
+      const file = await idbGet(LAST_FILE_KEY);
+      if(file) await loadFile(file, { skipPersist:true });
+    }catch(e){}
+  })();
 })();
 </script>
 
