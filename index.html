@@ -502,6 +502,31 @@
     color:var(--text-faint);
     pointer-events:none;
   }
+  .wavelength-line{
+    margin-top:7px;
+    text-align:left;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.03em;
+    color:var(--text-faint);
+    opacity:0.55;
+  }
+  .temp-toggle{ cursor:pointer; }
+  .temp-input{
+    width:32px;
+    background:none;
+    border:none;
+    border-bottom:1px solid var(--border-lo);
+    color:var(--text-faint);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.03em;
+    text-align:center;
+    padding:0;
+    outline:none;
+  }
+  .temp-input[hidden]{ display:none; }
+  .temp-input.wl-input{ width:48px; }
 
   /* --- audio mode menu (header icon-btn + dropdown) --- */
   .audio-menu-wrap{ position:relative; }
@@ -895,6 +920,7 @@
       </svg>
       <div class="wave-hz" id="waveHzLabel"></div>
     </div>
+    <div class="wavelength-line">wavelength: <span class="temp-toggle" id="wavelengthValue" tabindex="0" role="button" aria-label="Edit wavelength">—</span><input type="text" inputmode="decimal" class="temp-input wl-input" id="wavelengthInput" hidden> <span id="wavelengthUnit"></span> @ <span class="temp-toggle" id="tempToggle" tabindex="0" role="button" aria-label="Edit temperature">20</span><input type="text" inputmode="decimal" class="temp-input" id="tempInput" hidden>°C</div>
   </section>
 </div>
 
@@ -1000,12 +1026,20 @@
   const wavePath = document.getElementById('wavePath');
   const waveHzLabel = document.getElementById('waveHzLabel');
   const waveAudioBtn = document.getElementById('waveAudioBtn');
+  const wavelengthValue = document.getElementById('wavelengthValue');
+  const wavelengthUnitEl = document.getElementById('wavelengthUnit');
+  const wavelengthInput = document.getElementById('wavelengthInput');
+  const tempToggle = document.getElementById('tempToggle');
+  const tempInput = document.getElementById('tempInput');
   const divisionGrid = document.getElementById('divisionGrid');
   const modifierRow = document.getElementById('modifierRow');
 
   let bpm = 120;
   let sampleRate = 48000;
   let currentMs = null;
+  let tempC = 20;
+  let lastHz = null;
+  let wavelengthUnit = 'meters';
   let bpmLocked = true; // locked (default) = BPM fixed, division clicks recalculate ms — today's behavior
 
   const LOCK_CLOSED_SVG = '<svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="7.2" width="8" height="7" rx="1.2"/><path d="M6 7.2V5.2a2 2 0 0 1 4 0v2"/></svg>';
@@ -1159,7 +1193,7 @@
   function saveState(){
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async ()=>{
-      const payload = JSON.stringify({ bpm, sampleRate, a4, ms: currentMs, bpmLocked });
+      const payload = JSON.stringify({ bpm, sampleRate, a4, ms: currentMs, bpmLocked, tempC });
       try{
         if(window.storage){ await window.storage.set(STORAGE_KEY, payload); }
         else{ localStorage.setItem(STORAGE_KEY, payload); }
@@ -1254,6 +1288,7 @@
     if(!(hz>0) || !isFinite(hz)){
       wavePath.setAttribute('d', '');
       waveHzLabel.textContent = '';
+      updateWavelengthLabel(hz);
       return;
     }
     const midY = WAVE_VB_H/2;
@@ -1267,7 +1302,88 @@
     }
     wavePath.setAttribute('d', d.trim());
     waveHzLabel.textContent = (hz>=100 ? hz.toFixed(0) : hz>=10 ? hz.toFixed(1) : hz.toFixed(2)) + ' Hz';
+    updateWavelengthLabel(hz);
   }
+
+  // ---- wavelength (flavor readout, not used elsewhere): λ = speed of sound / f ----
+  function speedOfSound(t){ return 331.3 + 0.606*t; } // m/s, dry air, t in °C
+  function wavelengthParts(hz, t){
+    if(!(hz>0) || !isFinite(hz)) return { text:'—', unit:'' };
+    const m = speedOfSound(t) / hz;
+    if(m >= 1){
+      return { text:(m>=100 ? m.toFixed(0) : m>=10 ? m.toFixed(1) : m.toFixed(2)), unit:'meters' };
+    }
+    const cm = m*100;
+    return { text:(cm>=10 ? cm.toFixed(1) : cm.toFixed(2)), unit:'centimeters' };
+  }
+  function updateWavelengthLabel(hz){
+    lastHz = hz;
+    const parts = wavelengthParts(hz, tempC);
+    wavelengthValue.textContent = parts.text;
+    wavelengthUnitEl.textContent = parts.unit;
+    wavelengthUnit = parts.unit || wavelengthUnit;
+  }
+  function formatTemp(t){ return (t%1===0) ? String(t) : String(round(t,1)); }
+  function openTempEdit(){
+    tempInput.value = formatTemp(tempC);
+    tempToggle.hidden = true;
+    tempInput.hidden = false;
+    tempInput.focus();
+    tempInput.select();
+  }
+  function closeTempEdit(commit){
+    if(commit){
+      const v = parseFloat(tempInput.value);
+      if(isFinite(v)) tempC = Math.max(-50, Math.min(60, v));
+    }
+    tempToggle.textContent = formatTemp(tempC);
+    tempInput.hidden = true;
+    tempToggle.hidden = false;
+    updateWavelengthLabel(lastHz);
+    saveState();
+  }
+  tempToggle.addEventListener('click', openTempEdit);
+  tempToggle.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openTempEdit(); }
+  });
+  tempInput.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); tempInput.blur(); }
+    else if(e.key==='Escape'){ e.preventDefault(); closeTempEdit(false); }
+  });
+  tempInput.addEventListener('blur', ()=> closeTempEdit(true));
+
+  // ---- wavelength value itself is also editable: solves back to Hz (and everything downstream) ----
+  function openWavelengthEdit(){
+    if(!(lastHz>0)) return; // nothing sensible to edit
+    wavelengthInput.value = wavelengthValue.textContent;
+    wavelengthValue.hidden = true;
+    wavelengthInput.hidden = false;
+    wavelengthInput.focus();
+    wavelengthInput.select();
+  }
+  function closeWavelengthEdit(commit){
+    if(commit){
+      const v = parseFloat(wavelengthInput.value);
+      if(v>0 && isFinite(v)){
+        const meters = wavelengthUnit==='centimeters' ? v/100 : v;
+        const hz = speedOfSound(tempC) / meters;
+        if(hz>0 && isFinite(hz)) pushMs(msFromHz(hz));
+      }
+    }
+    wavelengthInput.hidden = true;
+    wavelengthValue.hidden = false;
+    if(!commit) updateWavelengthLabel(lastHz);
+  }
+  wavelengthValue.addEventListener('click', openWavelengthEdit);
+  wavelengthValue.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter' || e.key===' '){ e.preventDefault(); openWavelengthEdit(); }
+  });
+  wavelengthInput.addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); wavelengthInput.blur(); }
+    else if(e.key==='Escape'){ e.preventDefault(); closeWavelengthEdit(false); }
+  });
+  wavelengthInput.addEventListener('blur', ()=> closeWavelengthEdit(true));
+
 
   function pushMs(ms, skip){
     if(!(ms>0) || !isFinite(ms)) return;
@@ -2002,6 +2118,7 @@
       if(saved.sampleRate>0){ sampleRate = saved.sampleRate; sampleRateSelect.value = String(sampleRate); }
       if(saved.a4>0){ a4 = saved.a4; a4Select.value = String(a4); }
       if(typeof saved.bpmLocked === 'boolean'){ bpmLocked = saved.bpmLocked; renderLockBtn(); }
+      if(typeof saved.tempC === 'number' && isFinite(saved.tempC)){ tempC = saved.tempC; tempToggle.textContent = formatTemp(tempC); }
     }
     if(saved && saved.ms>0){
       pushMs(saved.ms);
