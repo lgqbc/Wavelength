@@ -1,6 +1,6 @@
 // Wavelength service worker
 // Bump CACHE_VERSION whenever any cached file changes so clients pick up the update.
-const CACHE_VERSION = 'wavelength-v1';
+const CACHE_VERSION = 'wavelength-v2';
 
 const PRECACHE_URLS = [
   '/',
