@@ -45,7 +45,7 @@
   }
   .unit{
     width:100%; max-width:680px; background: var(--panel);
-    border:1px solid var(--border); border-radius:12px; padding:20px 24px 22px;
+    border:0px solid var(--border); border-radius:12px; padding:20px 24px 22px;
   }
   .unit + .unit{ margin-top:16px; }
   header{ position:relative; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--border-lo); }
@@ -74,9 +74,12 @@
   }
   .contact-link:hover{ color:#a6c0d4; border-color:var(--sr); }
 
-  .placeholder-text{
-    font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; line-height:1.5; color:var(--text-faint);
+  .about-text{
+    font-family:'IBM Plex Sans', sans-serif; font-size:14px; line-height:2.5; color:var(--text-faint);
     margin:0;
+	
+  border-left: 3px solid var(--text-faint); 
+  padding-left: 16px;
   }
 
   @media (max-width:560px){
@@ -129,20 +132,21 @@
 </nav>
 
 <div class="unit">
+	<section>
+	  <p class="about-text"><em>wavelength.wiki</em> aims to be a small collection of nifty tools for audio production.</p>
+	  <p class="about-text">everything is <strong>100% free!</strong></p>
+	  <p class="about-text">if you're on mobile, you can <em>add the site to your homescreen / install it</em> to use it fully offline.</p>
+	  <p class="about-text">&nbsp;</p>
+	  <p class="about-text">if you have any feedback, you're very welcome to contact me.</p>
+	</section>
+</div>
+
+<div class="unit">
   <header>
     <div class="brand">contact</div>
   </header>
   <section>
     <a class="contact-link" href="mailto:wavelength@bofu.simplelogin.com">wavelength@bofu.simplelogin.com</a>
-  </section>
-</div>
-
-<div class="unit">
-  <header>
-    <div class="brand">about</div>
-  </header>
-  <section>
-    <p class="placeholder-text">wavelength.wiki aims to be a small collection of nifty tools for audio production. if you're on mobile, you can add the site to your homescreen/install it, to use it fully offline. if you have any feedback, you're very welcome to contact me.</p>
   </section>
 </div>
 
