@@ -73,12 +73,20 @@
     padding-bottom:2px; transition: color 120ms ease, border-color 120ms ease;
   }
   .contact-link:hover{ color:#a6c0d4; border-color:var(--sr); }
+  
+  .quarter-break {
+    height: 0.4em;
+  }
+  
+  .full-break {
+	height: 2em;
+  }
 
   .about-text{
     font-family:'IBM Plex Sans', sans-serif; font-size:14px; line-height:2.5; color:var(--text-faint);
     margin:0;
 	
-  border-left: 3px solid var(--sr-glow); 
+  border-left: 2px solid var(--sr-glow); 
   padding-left: 16px;
   }
 
@@ -134,9 +142,11 @@
 <div class="unit">
 	<section>
 	  <p class="about-text"><em>wavelength.wiki</em> aims to be a small collection of nifty tools for audio production.</p>
+	  <div class="quarter-break"></div>
 	  <p class="about-text">everything is <strong>100% free!</strong></p>
+	  <div class="quarter-break"></div>
 	  <p class="about-text">if you're on mobile, you can <em>add the site to your homescreen / install it</em> to use it fully offline.</p>
-	  <p class="about-text">&nbsp;</p>
+	  <div class="full-break"></div>
 	  <p class="about-text">if you have any feedback, you're very welcome to contact me.</p>
 	</section>
 </div>
