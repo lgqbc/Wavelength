@@ -27,6 +27,21 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Wavelength">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Wavelength Musical Calculator",
+  "url": "https://wavelength.wiki/",
+  "description": "Free browser-based calculator for music producers: convert BPM, milliseconds, Hz, note values, and samples. Includes tap tempo, click track, and delay/LFO timing tools.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "browserRequirements": "Requires JavaScript",
+  "publisher": { "@type": "Organization", "name": "Wavelength", "url": "https://wavelength.wiki/" }
+}
+</script>
 <style>
   :root{
     --bg: #131313;
@@ -1217,18 +1232,12 @@
     clearTimeout(saveTimer);
     saveTimer = setTimeout(async ()=>{
       const payload = JSON.stringify({ bpm, sampleRate, a4, ms: currentMs, bpmLocked, tempC });
-      try{
-        if(window.storage){ await window.storage.set(STORAGE_KEY, payload); }
-        else{ localStorage.setItem(STORAGE_KEY, payload); }
-      }catch(e){ /* storage unavailable — fail silently, no persistence this session */ }
+      try{ localStorage.setItem(STORAGE_KEY, payload); }
+      catch(e){ /* storage unavailable — fail silently, no persistence this session */ }
     }, 300);
   }
   async function loadState(){
     try{
-      if(window.storage){
-        const res = await window.storage.get(STORAGE_KEY);
-        return res ? JSON.parse(res.value) : null;
-      }
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? JSON.parse(raw) : null;
     }catch(e){ return null; }
@@ -1939,16 +1948,12 @@
     clearTips();
   }
   async function markTipsSeen(){
-    try{
-      if(window.storage){ await window.storage.set(TIPS_SEEN_KEY, '1'); }
-      else{ localStorage.setItem(TIPS_SEEN_KEY, '1'); }
-    }catch(e){ /* ignore */ }
+    try{ localStorage.setItem(TIPS_SEEN_KEY, '1'); }
+    catch(e){ /* ignore */ }
   }
   async function hasTipsSeen(){
-    try{
-      if(window.storage){ return !!(await window.storage.get(TIPS_SEEN_KEY)); }
-      return !!localStorage.getItem(TIPS_SEEN_KEY);
-    }catch(e){ return false; }
+    try{ return !!localStorage.getItem(TIPS_SEEN_KEY); }
+    catch(e){ return false; }
   }
 
   tipsBtn.addEventListener('click', showTips);
@@ -1987,18 +1992,12 @@
     clearTimeout(scratchSaveTimer);
     scratchSaveTimer = setTimeout(async ()=>{
       const payload = JSON.stringify({ history: calcHistory, notes: notesField.value });
-      try{
-        if(window.storage){ await window.storage.set(SCRATCH_KEY, payload); }
-        else{ localStorage.setItem(SCRATCH_KEY, payload); }
-      }catch(e){ /* storage unavailable — fail silently, no persistence this session */ }
+      try{ localStorage.setItem(SCRATCH_KEY, payload); }
+      catch(e){ /* storage unavailable — fail silently, no persistence this session */ }
     }, 300);
   }
   async function loadScratchState(){
     try{
-      if(window.storage){
-        const res = await window.storage.get(SCRATCH_KEY);
-        return res ? JSON.parse(res.value) : null;
-      }
       const raw = localStorage.getItem(SCRATCH_KEY);
       return raw ? JSON.parse(raw) : null;
     }catch(e){ return null; }
