@@ -23,6 +23,21 @@
 <link rel="icon" href="/favicon.ico">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <link rel="manifest" href="/manifest.json">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Session Notes — Wavelength",
+  "url": "https://wavelength.wiki/session-notes/",
+  "description": "Record and timestamp studio session notes in your browser. Playback, mic recording, and WAV export, no install required.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "browserRequirements": "Requires JavaScript",
+  "publisher": { "@type": "Organization", "name": "Wavelength", "url": "https://wavelength.wiki/" }
+}
+</script>
 <meta name="theme-color" content="#131313">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -587,8 +602,8 @@
 
   function slugify(name){ return 'session-notes:' + name.replace(/[^A-Za-z0-9._-]/g, '_').slice(0, 150); }
 
-  // ---- persisted selected file: IndexedDB holds the actual bytes (localStorage/window.storage
-  // are text-only and far too small for audio). Recordings are intentionally NOT persisted here —
+  // ---- persisted selected file: IndexedDB holds the actual bytes (localStorage is
+  // text-only and far too small for audio). Recordings are intentionally NOT persisted here —
   // only a file picked from disk or dropped in. Fails silently wherever IndexedDB is unavailable. ----
   const IDB_NAME = 'session-notes-db';
   const IDB_STORE = 'files';
@@ -639,18 +654,16 @@
   async function saveNotes(){
     if(!currentFileKey) return;
     const payload = JSON.stringify(notes.map(n => ({ id:n.id, time:n.time, text:n.text })));
-    try{ if(window.storage){ await window.storage.set(currentFileKey, payload); } else{ localStorage.setItem(currentFileKey, payload); } }catch(e){}
+    try{ localStorage.setItem(currentFileKey, payload); }catch(e){}
   }
   async function loadNotesFor(key){
     try{
-      if(window.storage){ const res = await window.storage.get(key); return res ? JSON.parse(res.value) : []; }
       const raw = localStorage.getItem(key); return raw ? JSON.parse(raw) : [];
     }catch(e){ return []; }
   }
-  async function saveVolumePref(v){ try{ if(window.storage){ await window.storage.set('session-notes-volume', String(v)); } else{ localStorage.setItem('session-notes-volume', String(v)); } }catch(e){} }
+  async function saveVolumePref(v){ try{ localStorage.setItem('session-notes-volume', String(v)); }catch(e){} }
   async function loadVolumePref(){
     try{
-      if(window.storage){ const res = await window.storage.get('session-notes-volume'); return res ? parseFloat(res.value) : null; }
       const raw = localStorage.getItem('session-notes-volume'); return raw !== null ? parseFloat(raw) : null;
     }catch(e){ return null; }
   }
