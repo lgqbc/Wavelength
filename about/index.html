@@ -50,7 +50,7 @@
   .unit + .unit{ margin-top:16px; }
   header{ position:relative; padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--border-lo); }
   .brand{
-    font-family:'IBM Plex Mono', monospace; margin:0; font-size:16px; font-weight:300;
+    font-family:'IBM Plex Sans', sans-serif; margin:0; font-size:16px; font-weight:300;
     letter-spacing:0.14em; color:var(--text-faint); text-transform:lowercase;
   }
   .site-wordmark{ display:flex; justify-content:center; margin:0 0 18px; width:100%; max-width:680px; }
@@ -88,6 +88,11 @@
 	
   border-left: 2px solid var(--sr-glow); 
   padding-left: 16px;
+  }
+  
+  .formula-text{
+    font-family:'IBM Plex Sans', sans-serif; font-size:14px; line-height:2.5; color:var(--text-muted);
+    margin:0;
   }
 
   @media (max-width:560px){
@@ -151,6 +156,7 @@
 	</section>
 </div>
 
+
 <div class="unit">
   <header>
     <div class="brand">contact</div>
@@ -159,6 +165,22 @@
     <a class="contact-link" href="mailto:wavelength@bofu.simplelogin.com">wavelength@bofu.simplelogin.com</a>
   </section>
 </div>
+
+<div class="unit">
+  <header>
+    <div class="brand">formulas</div>
+  </header>
+  <section>
+    <p class="formula-text"><strong>tempo > ms:</strong> <em>(60000 / bpm) × (4 / n)</em>, where n is the note division.</p>
+    <div class="quarter-break"></div>
+    <p class="formula-text"><strong>ms > hz:</strong> <em>1000 / ms</em>.</p>
+    <div class="quarter-break"></div>
+    <p class="formula-text"><strong>ms > samples:</strong> <em>(ms / 1000) × sample rate.</em></p>
+    <div class="quarter-break"></div>
+    <p class="formula-text"><strong>note > hz:</strong> 12-tone equal temperament, <em>a4 × 2^((midi − 69) / 12)</em></p>
+  </section>
+</div>
+
 
 <script>
 if('serviceWorker' in navigator){
