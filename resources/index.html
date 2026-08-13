@@ -55,12 +55,13 @@
   }
   .site-wordmark{ display:flex; justify-content:center; margin:0 0 18px; width:100%; max-width:680px; }
   .site-wordmark svg{ display:block; height:55px; width:auto; }
-  .site-nav{ display:flex; gap:12px; justify-content:center; width:100%; max-width:680px; margin:0 0 18px; }
+  .site-nav{ display:flex; gap:12px; justify-content:center; width:100%; max-width:680px; margin:0 0 18px; flex-wrap: nowrap; }
   .site-nav a{
     font-family:'IBM Plex Sans', sans-serif; font-size:12px; font-weight:500;
     letter-spacing:0.12em; text-transform:lowercase; text-decoration:none; color:var(--text-faint);
     padding-bottom:4px; border-bottom:1px solid transparent;
     transition: color 120ms ease, border-color 120ms ease;
+	white-space: nowrap;
   }
   .site-nav a:hover{ color:var(--text-muted); }
   .site-nav a.active{ color:var(--sr); border-color:var(--sr-glow); }
