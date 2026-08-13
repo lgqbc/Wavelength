@@ -4,7 +4,7 @@
 A free, no-account, browser-based suite of tools for music producers. Three pages:
 - `/` — Musical Calculator: BPM ↔ ms ↔ Hz ↔ note ↔ sample conversion, tap tempo, click track, dotted/triplet divisions, wavelength/temperature calc, plus scratchpad notes + basic calculator.
 - `/session-notes/` — timestamped note-taking synced to audio playback or live mic recording, WAV export.
-- `/about/` — short blurb + contact (SimpleLogin email alias).
+- `/about/` — blurb, formulas reference (tempo→ms, ms→hz, ms→samples, note→hz), contact (SimpleLogin email alias).
 
 ## Stack
 - Vanilla JS, no framework, no build step, no dependencies — single-file-per-page HTML/CSS/JS.
@@ -14,7 +14,7 @@ A free, no-account, browser-based suite of tools for music producers. Three page
 
 ## Hosting / infra
 - GitHub Pages, custom domain `wavelength.wiki` via CNAME, DNS on GoDaddy (not proxied through Cloudflare — no custom headers possible currently).
-- View counter: separate Cloudflare Worker + KV, pixel-beacon on all 3 pages, currently on the public `*.workers.dev` subdomain (`wavelength-counter.lukas-gilow.workers.dev`).
+- View counter: separate Cloudflare Worker + KV, pixel-beacon on all 3 pages, on the account's `wavelengthapp.workers.dev` subdomain (renamed from a subdomain that leaked a real name).
 
 ## Current state (as of this review)
 - Live, picking up traction (~500 views/24h at time of writing) via Reddit promotion in music-production subreddits.
@@ -25,7 +25,6 @@ A free, no-account, browser-based suite of tools for music producers. Three page
 ## Known, deliberately not fixed yet
 - **Pages are still thin on indexable text** (~60–200 words) — accepted trade-off for keeping the tool minimal. Any future content addition should be real, visible copy (e.g. on `/about/`), not hidden text.
 - **No CSP header/meta tag.** Low risk today (no user-controlled HTML sinks found — note text is properly escaped before rendering), but flagged for later, especially once/if the site is proxied through Cloudflare and adding headers becomes cheap.
-- **View-counter Worker leaks a real name** via its `*.workers.dev` subdomain, inconsistent with the anonymized contact email on `/about/`. Fix requires a Cloudflare custom domain for the Worker (see below).
 - **No security headers at all** — GitHub Pages can't set them; would need Cloudflare (or another CDN) in front of the domain.
 - **Session Notes localStorage keys accumulate** per opened file/recording, never cleaned up on delete. Low practical impact at current scale.
 - **OG/Twitter share image is the square 512×512 app icon**, not a proper 1200×630 banner — affects how link previews look when shared (Reddit/Discord/Twitter), separate from SEO.
